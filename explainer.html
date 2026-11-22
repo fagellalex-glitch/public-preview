@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NeuroAdapt Explainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one 16:9 stage (960 × 540, scaled to fit), six scenes stacked inside, Prev / dots / Next below.
+   Palette: lilac-white paper and deep indigo ink, with a violet → magenta → coral → amber gradient
+   used as light washes, never as text. Single light theme by choice; dark scenes set their own colors. */
+:root {
+  color-scheme: light;
+  --paper: #f6f5fb;
+  --card: #ffffff;
+  --surface-2: #f1eff9;
+  --line: #e6e3f0;
+  --line-2: #d6d1e6;
+  --ink: #15122e;
+  --ink-2: #4a4664;
+  --ink-3: #6b6786;
+  --violet: #5a3ff5;
+  --magenta: #c43dd9;
+  --coral: #ff6a5b;
+  --amber: #ffb54a;
+  --accent-soft: #efebff;
+  --grad: linear-gradient(110deg, #5a3ff5 0%, #c43dd9 45%, #ff6a5b 78%, #ffb54a 100%);
+  --deep: #15122e;
+  --deep-2: #1f1a40;
+  --deep-line: #322c58;
+  --deep-ink: #efedfb;
+  --deep-ink-2: #aaa5c8;
+  --deep-signal: #b9abff;
+  --font: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+p, h1, h2, h3 { margin: 0; }
+.page { max-width: 1040px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+.top { display: flex; align-items: center; gap: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
+.mark { width: 28px; height: 28px; border-radius: 8px; background: var(--grad); display: grid; place-items: center; flex: none; }
+.mark svg { width: 20px; height: 12px; }
+.top .sub { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+
+/* ------------------------------------------------------------------ Stage */
+.stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--card); box-shadow: 0 30px 60px -40px rgb(21 18 46 / 0.35); }
+.frame { position: absolute; left: 0; top: 0; width: 960px; height: 540px; transform-origin: 0 0; transform: scale(var(--s, 1)); }
+.scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 400ms ease, visibility 0s 400ms; overflow: hidden; }
+.scene.active { opacity: 1; visibility: visible; transition: opacity 400ms ease; }
+.light { background: var(--card); color: var(--ink); }
+.dark { background: var(--deep); color: var(--deep-ink); }
+.wash { position: absolute; inset: -20%; pointer-events: none; filter: blur(60px); opacity: 0.55;
+  background:
+    radial-gradient(28% 34% at 22% 30%, #5a3ff5, transparent 70%),
+    radial-gradient(26% 30% at 70% 24%, #c43dd9, transparent 70%),
+    radial-gradient(30% 34% at 78% 78%, #ff6a5b, transparent 70%),
+    radial-gradient(24% 28% at 30% 82%, #ffb54a, transparent 70%); }
+.light .wash { opacity: 0.22; }
+.active .wash { animation: drift 14s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translate(-3%, -2%) rotate(0deg); } to { transform: translate(3%, 2%) rotate(8deg); } }
+.tag { position: absolute; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.light .tag { color: var(--violet); }
+.dark .tag { color: var(--deep-signal); }
+.tag.tl { left: 48px; top: 36px; }
+
+/* Shared entrance keyframes. Base styles are the final state, so reduced motion shows the finished frame. */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes draw { from { stroke-dashoffset: var(--len, 1000); } to { stroke-dashoffset: 0; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.6); } 70% { transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+
+/* ------------------------------------------------------------------ Scene 1: Hook */
+.s1 .copy { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 22px; padding: 0 100px; }
+.s1 h2 { font-size: 60px; font-weight: 800; letter-spacing: -0.05em; line-height: 1.02; }
+.s1 .l2 { font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: var(--deep-signal); }
+.active.s1 h2 { animation: fadeUp 1s cubic-bezier(.2,.7,.2,1) both; }
+.active.s1 .l2 { animation: fadeUp 900ms 1.2s cubic-bezier(.2,.7,.2,1) both; }
+
+/* ------------------------------------------------------------------ Scene 2: Problem */
+.s2 .lesson { position: absolute; left: 48px; top: 84px; width: 500px; height: 330px; border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 12px; align-content: start; background: var(--card); }
+.s2 .lesson h3, .s4 h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.bar { height: 9px; border-radius: 5px; background: var(--line); }
+.formula { font-family: var(--mono); font-size: 14px; color: var(--ink-2); background: var(--surface-2); padding: 8px 12px; border-radius: 8px; width: fit-content; }
+.s2 .meter { position: absolute; right: 48px; top: 84px; width: 330px; height: 200px; border-radius: 18px; background: var(--deep); color: var(--deep-ink); padding: 24px; display: grid; align-content: space-between; }
+.s2 .meter .lbl { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--deep-ink-2); }
+@property --n { syntax: "<integer>"; initial-value: 38; inherits: false; }
+.count { --n: 38; counter-reset: n var(--n); font-family: var(--mono); font-size: 92px; line-height: 1; letter-spacing: -0.05em; color: var(--deep-signal); }
+.count::before { content: counter(n); }
+.count small { font-size: 22px; color: var(--deep-ink-2); margin-left: 6px; letter-spacing: 0; }
+.active .count { animation: countup 3s cubic-bezier(.3,.1,.3,1) both; }
+@keyframes countup { from { --n: 0; } to { --n: 38; } }
+.s2 .quiz { position: absolute; right: 48px; top: 300px; width: 330px; padding: 18px 20px; border-radius: 16px; border: 1px solid var(--line-2); background: var(--card); display: grid; gap: 8px; box-shadow: 0 20px 40px -30px rgb(21 18 46 / .5); }
+.s2 .quiz .q { font-size: 15px; color: var(--ink-2); }
+.s2 .quiz .verdict { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #c4304a; }
+.s2 .quiz .verdict i { width: 22px; height: 22px; border-radius: 50%; background: #c4304a; color: #fff; font-style: normal; font-size: 14px; display: grid; place-items: center; }
+.active .quiz { animation: slideUp 700ms 3.2s cubic-bezier(.2,.7,.2,1) both; }
+.s2 .caption { position: absolute; left: 48px; bottom: 44px; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; }
+.active.s2 .caption { animation: fadeUp 800ms 4s both; }
+
+/* ------------------------------------------------------------------ Scene 3: Product intro */
+.s3 .center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 34px; padding: 0 110px; text-align: center; }
+.s3 .logo { display: flex; align-items: center; gap: 20px; }
+.s3 .tile { width: 96px; height: 96px; border-radius: 26px; background: var(--grad); display: grid; place-items: center; }
+.s3 .tile svg { width: 66px; height: 40px; }
+.s3 .tile path { --len: 60; stroke-dasharray: 60; }
+.active.s3 .tile { animation: pop 700ms cubic-bezier(.2,.7,.2,1) both; }
+.active.s3 .tile path { animation: draw 1.2s 500ms ease-out both; }
+.s3 .word { font-size: 56px; font-weight: 800; letter-spacing: -0.05em; }
+.active.s3 .word { animation: fadeIn 700ms 900ms both; }
+.s3 .line { font-size: 30px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; max-width: 760px; }
+.s3 .line b { color: var(--violet); font-weight: 700; }
+.active.s3 .line { animation: wipe 1.4s 1.6s cubic-bezier(.6,.1,.2,1) both; }
+
+/* ------------------------------------------------------------------ Scene 4: Demo */
+.s4 .card { position: absolute; top: 76px; width: 420px; height: 330px; border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 10px; align-content: start; background: var(--card); }
+.s4 .before { left: 40px; }
+.s4 .after { left: 500px; border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
+.s4 .head { display: flex; justify-content: space-between; align-items: baseline; }
+.s4 .head span { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.s4 .mini { width: 380px; height: 110px; margin-top: 4px; }
+.s4 .mini .thr { stroke: var(--ink-3); stroke-dasharray: 4 4; opacity: .6; }
+.s4 .mini .ln { stroke: url(#g4); stroke-width: 2.4; fill: none; stroke-dasharray: 1200; --len: 1200; }
+.active.s4 .mini .ln { animation: draw 2.6s 300ms ease-in-out both; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { position: relative; font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); background: var(--surface-2); }
+.chip.new { background: var(--accent-soft); color: var(--violet); border-color: color-mix(in srgb, var(--violet) 35%, transparent); }
+.active .chip.new { animation: pop 500ms both; animation-delay: calc(2.4s + var(--d, 0s)); }
+.s4 .graph { width: 380px; height: 96px; }
+.s4 .graph .edge { stroke: var(--violet); stroke-width: 1.6; fill: none; }
+.s4 .graph .node { fill: var(--accent-soft); stroke: var(--violet); stroke-width: 1.6; }
+.s4 .graph text { font-family: var(--mono); font-size: 12px; fill: var(--ink); }
+.active.s4 .graph { animation: fadeUp 700ms 2.6s both; }
+.example { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink-2); padding: 10px 12px; border: 1px dashed var(--line-2); border-radius: 10px; }
+.example b { color: var(--violet); font-weight: 500; }
+.active.s4 .example { animation: fadeUp 700ms 2.9s both; }
+.okpill { display: inline-flex; align-items: center; gap: 8px; width: fit-content; font-family: var(--mono); font-size: 12px; padding: 6px 12px; border-radius: 999px; background: var(--deep); color: var(--deep-ink); }
+.okpill i { width: 8px; height: 8px; border-radius: 50%; background: var(--deep-signal); }
+.active.s4 .okpill { animation: fadeUp 600ms 3.3s both; }
+.s4 .pointers { position: absolute; inset: 0; pointer-events: none; }
+.s4 .pointers path { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 300; --len: 300; }
+.s4 .pointers circle { fill: var(--ink); }
+.active.s4 .pointers .p1 { animation: draw 700ms 3.6s ease-out both; }
+.active.s4 .pointers .p2 { animation: draw 700ms 4.2s ease-out both; }
+.active.s4 .pointers .p3 { animation: draw 700ms 4.8s ease-out both; }
+.active.s4 .pointers .d1 { animation: fadeIn 300ms 4.2s both; }
+.active.s4 .pointers .d2 { animation: fadeIn 300ms 4.8s both; }
+.active.s4 .pointers .d3 { animation: fadeIn 300ms 5.4s both; }
+.s4 .call { position: absolute; top: 440px; width: 270px; padding: 12px 14px; border-radius: 12px; background: var(--deep); color: var(--deep-ink); font-size: 13px; line-height: 1.4; }
+.s4 .call b { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--deep-signal); font-weight: 500; margin-bottom: 3px; }
+.s4 .c1 { left: 40px; } .s4 .c2 { left: 345px; } .s4 .c3 { left: 650px; }
+.active.s4 .c1 { animation: fadeUp 500ms 3.4s both; }
+.active.s4 .c2 { animation: fadeUp 500ms 4s both; }
+.active.s4 .c3 { animation: fadeUp 500ms 4.6s both; }
+.s4 .sample { position: absolute; right: 40px; top: 40px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 10px; }
+
+/* ------------------------------------------------------------------ Scene 5: Technical proof */
+.s5 h2 { position: absolute; left: 48px; top: 70px; font-size: 40px; font-weight: 800; letter-spacing: -0.045em; max-width: 700px; line-height: 1.05; }
+.active.s5 h2 { animation: fadeUp 800ms both; }
+.s5 .row { position: absolute; left: 48px; right: 48px; display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 20px; }
+.s5 .row .k { font-size: 15px; font-weight: 600; }
+.s5 .row .k small { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--deep-ink-2); margin-top: 2px; }
+.s5 .r1 { top: 186px; }
+.s5 .r2 { top: 236px; }
+.dots { display: flex; justify-content: space-between; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--deep-ink-2); }
+.active .dots i { animation: fadeIn 200ms both; animation-delay: calc(var(--i) * 40ms + 600ms); }
+.s5 .span { width: 600px; height: 110px; }
+.s5 .span .ln { stroke: url(#g5); stroke-width: 2.6; fill: none; stroke-dasharray: 1400; --len: 1400; }
+.s5 .span .base { stroke: var(--deep-line); }
+.active.s5 .span .ln { animation: draw 2.4s 1.6s ease-in-out both; }
+.s5 .eqs { position: absolute; left: 48px; right: 48px; top: 384px; display: grid; gap: 10px; }
+.s5 .eq { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: baseline; font-family: var(--mono); font-size: 16px; }
+.s5 .eq span { font-family: var(--font); font-size: 14px; color: var(--deep-ink-2); }
+.active.s5 .eq:nth-child(1) { animation: fadeUp 600ms 4.2s both; }
+.active.s5 .eq:nth-child(2) { animation: fadeUp 600ms 4.8s both; }
+.active.s5 .eq:nth-child(3) { animation: fadeUp 600ms 5.4s both; }
+
+/* ------------------------------------------------------------------ Scene 6: CTA */
+.s6 .center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; gap: 30px; }
+.s6 h2 { font-size: 64px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
+.active.s6 h2 { animation: fadeUp 900ms both; }
+.s6 .btns { display: flex; gap: 12px; }
+.active.s6 .btns { animation: fadeUp 700ms 500ms both; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; font-size: 16px; font-weight: 600; text-decoration: none; transition: transform 180ms; }
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--grad); color: #fff; }
+.btn-ghost { border: 1px solid var(--deep-line); color: var(--deep-ink); background: rgb(255 255 255 / 0.04); }
+.s6 .fine { font-family: var(--mono); font-size: 13px; color: var(--deep-ink-2); }
+.active.s6 .fine { animation: fadeIn 700ms 1s both; }
+
+/* ------------------------------------------------------------------ Controls */
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.nav-btn { font: 600 15px var(--font); padding: 11px 20px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); cursor: pointer; transition: border-color 150ms, transform 150ms; }
+.nav-btn:hover { border-color: var(--violet); }
+.nav-btn:disabled { opacity: 0.4; cursor: default; }
+.nav-btn:focus-visible, .dot:focus-visible, .btn:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+.dotrow { display: flex; gap: 10px; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line-2); background: transparent; padding: 0; cursor: pointer; transition: background 200ms, border-color 200ms, width 200ms; }
+.dot[aria-current="true"] { width: 30px; border-radius: 6px; background: var(--grad); border-color: transparent; }
+.scene-title { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-align: center; }
+@media (max-width: 520px) { .nav-btn { padding: 10px 14px; font-size: 14px; } .dotrow { gap: 7px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="top">
+    <span class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 20 12"><path d="M0 6h4l2-5 3 10 3-8 2 3h6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg></span>NeuroAdapt</span>
+    <span class="sub">Explainer · 6 scenes</span>
+  </div>
+
+  <div class="stage" id="stage" role="region" aria-roledescription="carousel" aria-label="NeuroAdapt explainer">
+    <div class="frame" id="frame">
+
+      <section class="scene dark s1" aria-label="Scene 1 of 6: Hook">
+        <div class="wash"></div>
+        <div class="copy">
+          <h2>You stopped paying attention two paragraphs ago.</h2>
+          <p class="l2">Your tutor didn't notice.</p>
+        </div>
+      </section>
+
+      <section class="scene light s2" aria-label="Scene 2 of 6: Problem">
+        <span class="tag tl">The problem</span>
+        <div class="lesson">
+          <h3>The chain rule</h3>
+          <div class="bar" style="width:100%"></div><div class="bar" style="width:94%"></div><div class="bar" style="width:100%"></div><div class="bar" style="width:86%"></div>
+          <div class="formula">∂L/∂w = ∂L/∂y · ∂y/∂w</div>
+          <div class="bar" style="width:100%"></div><div class="bar" style="width:91%"></div><div class="bar" style="width:97%"></div><div class="bar" style="width:72%"></div><div class="bar" style="width:100%"></div><div class="bar" style="width:58%"></div>
+        </div>
+        <div class="meter">
+          <span class="lbl">Seconds distracted</span>
+          <div class="count" aria-label="38 seconds"><small>s</small></div>
+        </div>
+        <div class="quiz">
+          <span class="q">Q3 · Apply the chain rule to a two-layer network.</span>
+          <span class="verdict"><i aria-hidden="true">×</i>Incorrect</span>
+        </div>
+        <p class="caption">Learning apps only find out after the mistake.</p>
+      </section>
+
+      <section class="scene light s3" aria-label="Scene 3 of 6: Product">
+        <div class="wash"></div>
+        <div class="center">
+          <div class="logo">
+            <span class="tile"><svg viewBox="0 0 20 12" aria-hidden="true"><path d="M0 6h4l2-5 3 10 3-8 2 3h6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+            <span class="word">NeuroAdapt</span>
+          </div>
+          <p class="line">NeuroAdapt reads your attention from a <b>4-channel EEG headset</b> and rewrites the lesson <b>before you fall behind.</b></p>
+        </div>
+      </section>
+
+      <section class="scene light s4" aria-label="Scene 4 of 6: Demo">
+        <span class="tag tl">One lesson, live</span>
+        <span class="sample">sample data</span>
+        <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><linearGradient id="g4" x1="0" x2="1"><stop offset="0" stop-color="#5a3ff5"/><stop offset=".5" stop-color="#c43dd9"/><stop offset="1" stop-color="#ff6a5b"/></linearGradient></defs></svg>
+        <div class="card before">
+          <div class="head"><h3>Before</h3><span>dense text</span></div>
+          <div class="chips"><span class="chip">1 diagram</span><span class="chip">long chunks</span><span class="chip">formal</span></div>
+          <div class="bar" style="width:100%"></div><div class="bar" style="width:93%"></div><div class="bar" style="width:100%"></div><div class="bar" style="width:80%"></div>
+          <svg class="mini" viewBox="0 0 400 120" aria-label="Attention span drops below the 0.45 threshold, then recovers">
+            <line class="thr" x1="0" x2="400" y1="66" y2="66"/>
+            <path class="ln" d="M0.0,34.6L2.5,34.2L5.0,39.0L7.5,36.3L10.0,38.0L12.5,45.0L15.0,39.8L17.5,31.3L20.0,36.1L22.5,40.5L25.0,37.4L27.5,40.5L30.0,43.3L32.5,34.6L35.0,31.4L37.5,39.8L40.0,41.6L42.5,38.0L45.0,40.8L47.5,39.5L50.0,31.7L52.5,34.8L55.0,43.3L57.5,41.1L60.0,37.3L62.5,39.4L65.0,36.1L67.5,32.4L70.0,39.7L72.5,44.6L75.0,38.6L77.5,35.9L80.0,37.8L82.5,35.0L85.0,35.8L87.5,43.3L90.0,42.8L92.5,35.3L95.0,35.0L97.5,37.5L100.0,36.5L102.5,39.6L105.0,43.8L107.5,38.8L110.0,33.0L112.5,35.9L115.0,39.0L117.5,39.0L120.0,42.5L122.5,44.7L125.0,41.8L127.5,44.0L130.0,53.7L132.5,61.1L135.0,65.2L137.5,70.0L140.0,71.8L142.5,71.5L145.0,76.6L147.5,84.2L150.0,85.5L152.5,82.7L155.0,81.0L157.5,79.1L160.0,78.6L162.5,82.6L165.0,86.5L167.5,84.3L170.0,80.0L172.5,78.9L175.0,79.8L177.5,81.5L180.0,84.9L182.5,85.9L185.0,81.4L187.5,77.5L190.0,79.4L192.5,82.6L195.0,83.8L197.5,84.8L200.0,83.5L202.5,78.5L205.0,77.2L207.5,82.4L210.0,85.3L212.5,83.6L215.0,82.9L217.5,81.0L220.0,77.1L222.5,79.6L225.0,86.1L227.5,85.5L230.0,81.2L232.5,80.9L235.0,79.7L237.5,78.0L240.0,83.3L242.5,87.9L245.0,81.9L247.5,76.0L250.0,76.0L252.5,72.9L255.0,69.7L257.5,72.1L260.0,68.3L262.5,56.0L265.0,50.9L267.5,51.7L270.0,47.3L272.5,44.7L275.0,46.3L277.5,39.1L280.0,29.8L282.5,33.3L285.0,38.2L287.5,35.3L290.0,36.2L292.5,37.9L295.0,30.2L297.5,27.2L300.0,35.7L302.5,37.9L305.0,32.8L307.5,34.3L310.0,33.8L312.5,26.8L315.0,30.0L317.5,39.3L320.0,36.2L322.5,30.6L325.0,33.3L327.5,31.5L330.0,27.5L332.5,35.1L335.0,40.4L337.5,32.3L340.0,28.9L342.5,33.3L345.0,30.9L347.5,30.4L350.0,39.0L352.5,37.8L355.0,27.9L357.5,29.2L360.0,34.4L362.5,31.6L365.0,33.8L367.5,39.5L370.0,32.7L372.5,25.6L375.0,32.1L377.5,36.0L380.0,32.5L382.5,35.5L385.0,36.9L387.5,28.0L390.0,26.9L392.5,36.2L395.0,36.6L397.5,32.5L400.0,35.2"/>
+          </svg>
+        </div>
+        <div class="card after">
+          <div class="head"><h3>After re-render</h3><span>visual</span></div>
+          <div class="chips"><span class="chip new" style="--d:0s">3 diagrams</span><span class="chip new" style="--d:.12s">short chunks</span><span class="chip new" style="--d:.24s">worked example</span></div>
+          <svg class="graph" viewBox="0 0 380 96" aria-label="Computation graph: w and x feed y, y feeds loss L">
+            <defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:#5a3ff5"/></marker></defs>
+            <path class="edge" d="M62 24 L156 44" marker-end="url(#ah4)"/><path class="edge" d="M62 72 L156 52" marker-end="url(#ah4)"/><path class="edge" d="M206 48 L282 48" marker-end="url(#ah4)"/>
+            <circle class="node" cx="42" cy="22" r="18"/><circle class="node" cx="42" cy="74" r="18"/><circle class="node" cx="182" cy="48" r="22"/><rect class="node" x="288" y="30" width="56" height="36" rx="10"/>
+            <text x="42" y="26" text-anchor="middle">w</text><text x="42" y="78" text-anchor="middle">x</text><text x="182" y="52" text-anchor="middle">y</text><text x="316" y="52" text-anchor="middle">L</text>
+          </svg>
+          <div class="example">w = 2, x = 3 → y = 6. If ∂L/∂y = 0.5, <b>∂L/∂w = 0.5 × 3 = 1.5</b></div>
+          <span class="okpill"><i></i>span 0.68 · recovered</span>
+        </div>
+        <svg class="pointers" viewBox="0 0 960 540" aria-hidden="true">
+          <path class="p1" d="M175 440 L175 400 L222 332"/><circle class="d1" cx="222" cy="332" r="4"/>
+          <path class="p2" d="M480 440 L480 146 L520 146"/><circle class="d2" cx="520" cy="146" r="4"/>
+          <path class="p3" d="M785 440 L785 400 L714 358"/><circle class="d3" cx="714" cy="358" r="4"/>
+        </svg>
+        <div class="call c1"><b>1 · Detect</b>Span 0.71 → 0.30, 7 s under threshold. All 4 channels agree.</div>
+        <div class="call c2"><b>2 · Re-render</b>Diagrams 1 → 3, worked example added, chunks shortened.</div>
+        <div class="call c3"><b>3 · Recover</b>Span back to 0.68 in 12 s. Diagram weight raised.</div>
+      </section>
+
+      <section class="scene dark s5" aria-label="Scene 5 of 6: Technical proof">
+        <div class="wash" style="opacity:.25"></div>
+        <span class="tag tl">Under the hood</span>
+        <h2>The stock headset light is on the whole time.</h2>
+        <div class="row r1"><span class="k">Standard on/off<small>p &gt; T, thresholded</small></span><div class="dots" id="dots"></div></div>
+        <div class="row r2"><span class="k">NeuroAdapt span<small>0 to 1, same 60 s</small></span>
+          <svg class="span" viewBox="0 0 600 110" aria-label="Continuous span over the same minute, showing the dip">
+            <defs><linearGradient id="g5" x1="0" x2="1"><stop offset="0" stop-color="#b9abff"/><stop offset=".55" stop-color="#e48ff0"/><stop offset="1" stop-color="#ff9a7a"/></linearGradient></defs>
+            <line class="base" x1="0" x2="600" y1="102" y2="102"/>
+            <path class="ln" d="M0.0,35.7L3.8,34.7L7.5,31.7L11.2,34.0L15.0,34.6L18.8,32.7L22.5,34.1L26.2,33.4L30.0,39.9L33.8,39.6L37.5,39.7L41.2,34.3L45.0,30.8L48.8,32.3L52.5,32.6L56.2,36.8L60.0,33.8L63.8,36.0L67.5,36.0L71.2,39.3L75.0,40.0L78.8,35.3L82.5,33.1L86.2,28.4L90.0,33.2L93.8,34.5L97.5,37.8L101.2,36.9L105.0,36.0L108.8,39.3L112.5,39.5L116.2,42.9L120.0,38.6L123.8,39.4L127.5,40.6L131.2,47.1L135.0,54.7L138.8,56.8L142.5,60.5L146.2,58.8L150.0,64.0L153.8,65.0L157.5,67.2L161.2,66.3L165.0,65.3L168.8,70.8L172.5,73.9L176.2,80.7L180.0,78.0L183.8,76.7L187.5,73.5L191.2,73.0L195.0,75.0L198.8,72.1L202.5,73.0L206.2,70.1L210.0,75.5L213.8,78.1L217.5,80.4L221.2,78.5L225.0,72.8L228.8,72.8L232.5,70.7L236.2,75.0L240.0,72.9L243.8,73.5L247.5,73.8L251.2,76.0L255.0,80.7L258.8,78.0L262.5,76.8L266.2,70.0L270.0,70.8L273.8,71.9L277.5,74.5L281.2,76.3L285.0,73.8L288.8,76.8L292.5,76.2L296.2,80.0L300.0,76.3L303.8,72.8L307.5,69.8L311.2,69.3L315.0,75.1L318.8,75.6L322.5,78.6L326.2,75.0L330.0,76.4L333.8,76.7L337.5,76.4L341.2,75.4L345.0,69.4L348.8,70.7L352.5,70.7L356.2,77.5L360.0,78.6L363.8,78.1L367.5,76.3L371.2,73.5L375.0,76.4L378.8,73.4L382.5,74.0L386.2,69.5L390.0,71.3L393.8,74.9L397.5,78.3L401.2,81.1L405.0,75.7L408.8,74.4L412.5,69.8L416.2,71.4L420.0,69.5L423.8,66.7L427.5,65.2L431.2,62.9L435.0,67.4L438.8,65.4L442.5,64.7L446.2,56.5L450.0,51.4L453.8,49.0L457.5,47.2L461.2,48.4L465.0,43.2L468.8,43.6L472.5,41.1L476.2,43.8L480.0,42.6L483.8,37.8L487.5,33.5L491.2,27.5L495.0,30.8L498.8,30.9L502.5,34.8L506.2,33.1L510.0,32.7L513.8,34.5L517.5,34.2L521.2,36.0L525.0,29.5L528.8,28.0L532.5,25.1L536.2,29.2L540.0,33.1L543.8,33.5L547.5,34.3L551.2,30.2L555.0,33.1L558.8,31.2L562.5,31.8L566.2,27.7L570.0,25.0L573.8,27.5L577.5,29.7L581.2,36.1L585.0,33.7L588.8,33.5L592.5,29.6L596.2,29.9L600.0,30.9"/>
+          </svg>
+        </div>
+        <div class="eqs">
+          <div class="eq"><code>s = ln(p / (1 − p)) = w · x</code><span>Undo the sigmoid.</span></div>
+          <div class="eq"><code>s̃ ← s̃ + (1 − e<sup>−Δt/τ</sup>)(s − s̃), τ = 4 s</code><span>Smooth over time.</span></div>
+          <div class="eq"><code>span = (s̃ − L) / (H − L)</code><span>Scale to your Relaxed and Focused states.</span></div>
+        </div>
+      </section>
+
+      <section class="scene dark s6" aria-label="Scene 6 of 6: Call to action">
+        <div class="wash" style="opacity:.7"></div>
+        <div class="center">
+          <h2>See the full loop running.</h2>
+          <div class="btns">
+            <a class="btn btn-primary" href="https://www.youtube.com/watch?v=NLZuqNi_TjE" target="_blank" rel="noopener">Watch the demo →</a>
+            <a class="btn btn-ghost" href="#stage" id="restart">Replay explainer</a>
+          </div>
+          <p class="fine">Research prototype · simulated attention in this explainer · not a medical device</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prev" type="button" aria-label="Previous scene">← Prev</button>
+    <div>
+      <div class="dotrow" id="dotrow" role="tablist" aria-label="Scenes"></div>
+    </div>
+    <button class="nav-btn" id="next" type="button" aria-label="Next scene">Next →</button>
+  </div>
+  <p class="scene-title" id="sceneTitle">1 / 6 · Hook</p>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById("stage"), frame = document.getElementById("frame");
+  const scenes = [...frame.querySelectorAll(".scene")];
+  const names = ["Hook", "Problem", "Product", "Demo", "Under the hood", "Call to action"];
+  const dotrow = document.getElementById("dotrow"), title = document.getElementById("sceneTitle");
+  const prev = document.getElementById("prev"), next = document.getElementById("next");
+
+  // Scene 5 dot row: 30 lit dots, one per two seconds.
+  const dots = document.getElementById("dots");
+  for (let i = 0; i < 30; i++) { const d = document.createElement("i"); d.style.setProperty("--i", i); dots.appendChild(d); }
+
+  const fit = () => frame.style.setProperty("--s", stage.clientWidth / 960);
+  new ResizeObserver(fit).observe(stage); fit();
+
+  const dotEls = scenes.map((_, i) => {
+    const b = document.createElement("button");
+    b.className = "dot"; b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-label", `Scene ${i + 1}: ${names[i]}`);
+    b.addEventListener("click", () => go(i));
+    dotrow.appendChild(b); return b;
+  });
+
+  let cur = 0;
+  function go(i) {
+    cur = Math.max(0, Math.min(scenes.length - 1, i));
+    scenes.forEach((s, k) => {
+      s.classList.remove("active");
+      s.setAttribute("aria-hidden", k === cur ? "false" : "true");
+    });
+    void frame.offsetWidth; // restart this scene's keyframes
+    scenes[cur].classList.add("active");
+    dotEls.forEach((d, k) => d.setAttribute("aria-current", k === cur ? "true" : "false"));
+    prev.disabled = cur === 0; next.disabled = cur === scenes.length - 1;
+    title.textContent = `${cur + 1} / ${scenes.length} · ${names[cur]}`;
+  }
+  prev.addEventListener("click", () => go(cur - 1));
+  next.addEventListener("click", () => go(cur + 1));
+  document.getElementById("restart").addEventListener("click", (e) => { e.preventDefault(); go(0); });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") go(cur + 1);
+    else if (e.key === "ArrowLeft") go(cur - 1);
+  });
+  go(0);
+})();
+</script>
+</body>
+</html>

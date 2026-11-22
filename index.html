@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NeuroAdapt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="NeuroAdapt is an AI tutor that reads a continuous attention signal from EEG and adapts each lesson to it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: near-black page; the instrument parts (headset card, technology, closing call) sit one step
+   deeper. One blue family carries the product: a cobalt-to-ice gradient for buttons, the logo tile and data
+   lines, and faint blue washes behind key sections. Never on text. Single dark theme by choice. */
+:root {
+  color-scheme: dark;
+  --paper: #05070b;
+  --surface: #0b0f16;
+  --surface-2: #111722;
+  --ink: #e9eef7;
+  --ink-2: #a3adbd;
+  --ink-3: #7d889b;
+  --line: #1a212c;
+  --line-2: #263040;
+  --accent: #3f6dff;
+  --accent-hover: #5a84ff;
+  --accent-ink: #ffffff;
+  --accent-soft: #10203f;
+  --signal: #9db8ff;
+  --threshold: #c5cfde;
+  --grid: rgb(233 238 247 / 0.06);
+  --grad: linear-gradient(110deg, #2f5bff 0%, #4f7dff 55%, #86a6ff 100%);
+  --deep: #070a10;
+  --ch-0: #c3d3ff;
+  --ch-1: #9db8ff;
+  --ch-2: #6f95ff;
+  --ch-3: #3f6dff;
+
+  --font-display: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --max: 1200px;
+  --r: 16px;
+}
+.scope, .tech, .cta {
+  --ink: #e9eef7; --ink-2: #9aa6b8; --ink-3: #7d889b;
+  --line: #1e2632; --line-2: #2a3445;
+  --surface: #0f141c; --surface-2: #151b25;
+  --signal: #9db8ff; --accent-soft: #112046; --threshold: #c5cfde;
+  --grid: rgb(233 238 247 / 0.07);
+  color: var(--ink);
+}
+.wash { position: absolute; inset: -20%; pointer-events: none; filter: blur(80px); mix-blend-mode: screen;
+  background:
+    radial-gradient(26% 32% at 20% 28%, #3f6dff, transparent 70%),
+    radial-gradient(24% 30% at 72% 22%, #4f7dff, transparent 70%),
+    radial-gradient(28% 32% at 80% 76%, #86a6ff, transparent 70%),
+    radial-gradient(22% 26% at 32% 84%, #b8ccff, transparent 70%);
+  animation: drift 16s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translate(-3%, -2%) rotate(0deg); } to { transform: translate(3%, 2%) rotate(8deg); } }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.035em; line-height: 1.04; }
+p { margin: 0; }
+.wrap { max-width: calc(var(--max) + 64px); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 720px) { .wrap { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ Type system */
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--signal); display: inline-flex; align-items: center; gap: 10px; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: currentColor; animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0.2; } }
+.lede { font-size: clamp(18px, 1.1vw + 12px, 21px); color: var(--ink-2); max-width: 60ch; line-height: 1.55; }
+.section { padding-block: clamp(80px, 10vw, 140px); }
+.section-head { display: grid; gap: 20px; margin-bottom: clamp(40px, 5vw, 64px); max-width: 860px; }
+.section-head h2 { font-size: clamp(36px, 4.8vw, 66px); font-weight: 750; }
+.hl { color: var(--signal); }
+.ghost { color: transparent; -webkit-text-stroke: 1.5px var(--ink-3); }
+.dip { display: inline-block; color: var(--signal); animation: dip 3.2s ease-in-out infinite; }
+@keyframes dip { 0%, 40%, 100% { transform: none; opacity: 1; } 55% { transform: translateY(0.16em); opacity: 0.4; } 72% { transform: translateY(0.08em); opacity: 0.7; } }
+mark { color: var(--ink); background-color: transparent; background-image: linear-gradient(90deg, rgb(63 109 255 / 0.38), rgb(79 125 255 / 0.38), rgb(134 166 255 / 0.38)); background-repeat: no-repeat; background-size: 100% 0.38em; background-position: 0 90%; padding-inline: 0.04em; }
+.js mark { background-size: 0% 0.38em; transition: background-size 1s cubic-bezier(.6,.1,.2,1); }
+.js mark.in { background-size: 100% 0.38em; }
+code, .mono { font-family: var(--font-mono); }
+
+/* ------------------------------------------------------------------ Nav */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--paper) 78%, transparent); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid transparent; transition: border-color 200ms; }
+.nav.scrolled { border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; }
+.mark { width: 28px; height: 28px; border-radius: 8px; background: var(--grad); display: grid; place-items: center; flex: none; }
+.mark svg { width: 20px; height: 12px; }
+.nav-links { display: flex; gap: 26px; margin-left: auto; font-size: 14px; color: var(--ink-2); }
+.nav-links a { text-decoration: none; transition: color 150ms; }
+.nav-links a:hover { color: var(--ink); }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 22px; border-radius: 999px; font-size: 15px; font-weight: 600; text-decoration: none; transition: transform 180ms ease, background 180ms ease, border-color 180ms ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--grad); background-size: 140% 100%; background-position: 0 0; color: var(--accent-ink); transition: transform 180ms ease, background-position 400ms ease; }
+.btn-primary:hover { background-position: 100% 0; }
+.btn-ghost { border: 1px solid var(--line-2); color: var(--ink); background: var(--surface); }
+.btn-ghost:hover { border-color: var(--ink-3); }
+.btn .arrow { transition: transform 180ms ease; }
+.btn:hover .arrow { transform: translateX(3px); }
+.nav .btn { padding: 8px 16px; font-size: 14px; }
+@media (max-width: 880px) { .nav-links { display: none; } .nav .btn { margin-left: auto; } }
+
+/* ------------------------------------------------------------------ Hero */
+.hero { position: relative; overflow: hidden; padding-block: clamp(56px, 8vw, 120px) clamp(48px, 6vw, 80px); border-bottom: 1px solid var(--line); }
+#ridge { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.hero .wrap { position: relative; }
+.vision .wash, .hero .wash { z-index: 0; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: clamp(32px, 5vw, 72px); align-items: end; }
+.hero h1 { font-size: clamp(48px, 7vw, 104px); font-weight: 850; letter-spacing: -0.055em; line-height: 0.94; }
+.hero h1 .trace { position: relative; display: inline-block; color: var(--signal); }
+.hero h1 .trace svg { position: absolute; left: 0; right: 0; bottom: -0.14em; width: 100%; height: 0.26em; overflow: visible; }
+.hero h1 .trace path { stroke: url(#traceGrad); stroke-width: 3; fill: none; stroke-dasharray: 700; animation: draw 2.4s 0.7s cubic-bezier(.6,.1,.2,1) both; }
+@keyframes draw { from { stroke-dashoffset: 700; } to { stroke-dashoffset: 0; } }
+.hero .lede { margin-top: 30px; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+.hero-copy > *:not(h1) { animation: rise 800ms cubic-bezier(.2,.7,.2,1) both; }
+.hero-copy > *:nth-child(2) { animation-delay: 260ms; }
+.hero-copy > *:nth-child(3) { animation-delay: 380ms; }
+.hero h1 .w { display: inline-block; animation: rise 900ms cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i) * 60ms); }
+@keyframes rise { from { opacity: 0.001; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+.scope { background: rgb(7 10 16 / 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line-2); border-radius: 20px; padding: 18px; box-shadow: 0 40px 80px -40px rgb(7 10 16 / 0.5); animation: rise 900ms 300ms cubic-bezier(.2,.7,.2,1) both; min-width: 0; }
+.scope-head { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); animation: blink 1.6s steps(1) infinite; }
+.scope-head .sim { margin-left: auto; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 999px; }
+.scope canvas { display: block; width: 100%; height: 150px; margin-top: 12px; }
+.scope-read { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: end; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+.span-num { font-family: var(--font-mono); font-size: 50px; line-height: 0.9; letter-spacing: -0.04em; color: var(--signal); transition: color 400ms; }
+.span-num.low { color: var(--ink-3); }
+.span-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+.span-bar { position: relative; height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.span-fill { position: absolute; inset: 0 auto 0 0; background: var(--grad); border-radius: 5px; transition: width 200ms linear; }
+.span-thr { position: absolute; top: -3px; bottom: -3px; left: 45%; width: 2px; background: var(--threshold); opacity: 0.7; }
+.agent-line { margin-top: 12px; min-height: 42px; font-size: 14px; line-height: 1.45; display: flex; gap: 10px; }
+.agent-line .tag { flex: none; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 6px; background: var(--accent-soft); color: var(--signal); height: fit-content; }
+.agent-line .txt { transition: opacity 250ms; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(56px, 7vw, 96px); border-top: 1px solid var(--line-2); }
+.stat { padding: 22px 20px 0 0; display: grid; gap: 4px; }
+.stat + .stat { padding-left: 20px; border-left: 1px solid var(--line-2); }
+.stat b { font-family: var(--font-mono); font-weight: 500; font-size: clamp(30px, 3.4vw, 46px); letter-spacing: -0.04em; line-height: 1; }
+.stat b small { font-size: max(14px, 0.45em); color: var(--ink-3); letter-spacing: 0; margin-left: 4px; }
+.stat > span { font-size: 14px; color: var(--ink-3); }
+@media (max-width: 960px) { .hero-grid { grid-template-columns: 1fr; align-items: start; } }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat:nth-child(3) { padding-left: 0; border-left: 0; } }
+
+/* ------------------------------------------------------------------ Pipeline */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; position: relative; }
+.stage { position: relative; padding: 0 18px 0 0; display: grid; gap: 12px; align-content: start; }
+.stage-node { position: relative; height: 64px; display: flex; align-items: center; }
+.stage-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line-2); display: grid; place-items: center; position: relative; z-index: 1; transition: border-color 250ms, background 250ms; }
+.stage:hover .stage-icon { border-color: var(--accent); background: var(--accent-soft); }
+.stage-icon svg { width: 28px; height: 28px; stroke: var(--signal); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.stage-node::after { content: ""; position: absolute; left: 56px; right: 0; top: 50%; height: 1px; background: var(--line-2); }
+.stage:last-child .stage-node::after { display: none; }
+.stage-node .pulse { position: absolute; left: 56px; top: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--signal); animation: travel 2.4s linear infinite; animation-delay: calc(var(--k) * 0.48s); }
+.stage:last-child .pulse { display: none; }
+@keyframes travel { 0% { transform: translateX(0); opacity: 0; } 10%, 85% { opacity: 1; } 100% { transform: translateX(var(--run, 150px)); opacity: 0; } }
+.stage .k { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.stage h3 { font-size: 21px; letter-spacing: -0.02em; line-height: 1.2; }
+.stage p { font-size: 15px; color: var(--ink-2); }
+.stage .io { font-family: var(--font-mono); font-size: 12px; color: var(--signal); }
+@media (max-width: 980px) {
+  .pipe { grid-template-columns: 1fr; gap: 0; }
+  .stage { grid-template-columns: 56px minmax(0, 1fr); column-gap: 20px; padding: 0 0 28px; }
+  .stage-node { grid-row: span 4; height: auto; align-items: flex-start; }
+  .stage-node::after { left: 28px; right: auto; top: 56px; bottom: -28px; width: 1px; height: auto; }
+  .stage-node .pulse { display: none; }
+}
+
+/* ------------------------------------------------------------------ Technology bento */
+.tech { position: relative; background: #080b11; border-block: 1px solid var(--line); overflow: hidden; }
+.tech::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent); -webkit-mask-image: linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent); opacity: 0.6; }
+.tech .wrap { position: relative; }
+.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.panel { background: rgb(14 19 27 / 0.9); border: 1px solid var(--line-2); border-radius: var(--r); padding: 26px; min-width: 0; display: grid; gap: 14px; align-content: start; }
+.panel h3 { font-size: 22px; letter-spacing: -0.02em; line-height: 1.2; }
+.panel p { color: var(--ink-2); font-size: 15px; }
+.panel .cap { font-size: 14px; color: var(--ink-3); }
+.c7 { grid-column: span 7; } .c5 { grid-column: span 5; } .c6 { grid-column: span 6; } .c12 { grid-column: span 12; }
+@media (max-width: 960px) { .c7, .c5, .c6 { grid-column: span 12; } }
+.panel svg { width: 100%; height: auto; display: block; overflow: visible; }
+.panel svg text { fill: var(--ink-3); font-family: var(--font-mono); font-size: 11px; }
+.panel svg .grid { stroke: var(--grid); }
+.eqs { display: grid; gap: 14px; }
+.eq { display: grid; gap: 4px; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.eq code { font-size: 15px; color: var(--ink); }
+.eq span { font-size: 13px; color: var(--ink-3); }
+.og-wrap { overflow-x: auto; }
+.og { width: 100%; min-width: 620px; border-collapse: separate; border-spacing: 6px; font-size: 15px; }
+.og th { font-weight: 500; font-size: 13px; color: var(--ink-3); text-align: left; padding: 4px 8px; font-family: var(--font-mono); }
+.og td { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; vertical-align: top; line-height: 1.45; transition: border-color 200ms, background 200ms; }
+.og td:hover { border-color: var(--accent); background: var(--accent-soft); }
+.og td b { font-weight: 600; }
+.nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.num { padding: 20px 0 0; border-top: 1px solid var(--line-2); display: grid; gap: 4px; }
+.num b { font-family: var(--font-mono); font-weight: 500; font-size: clamp(26px, 2.8vw, 38px); letter-spacing: -0.03em; }
+.num span { font-size: 14px; color: var(--ink-3); }
+@media (max-width: 720px) { .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ------------------------------------------------------------------ Scroll-linked entrances (visible at rest) */
+@supports (animation-timeline: view()) {
+  .reveal { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  @keyframes reveal { from { opacity: 0.001; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+  .split .w { display: inline-block; animation: word linear both; animation-timeline: view(); animation-range: entry calc(var(--i) * 4%) entry calc(45% + var(--i) * 4%); }
+  @keyframes word { from { opacity: 0.001; transform: translateY(0.4em) rotate(2deg); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+#explainer { --card: #0b0f16; --violet: #9db8ff; --magenta: #4f7dff; --coral: #86a6ff; --amber: #b8ccff;
+  --deep-2: #0f141d; --deep-line: #232c3b; --deep-ink: #e9eef7; --deep-ink-2: #9aa6b8; --deep-signal: #9db8ff;
+  --font: var(--font-body); --mono: var(--font-mono); }
+.explainer-wrap { display: grid; gap: 18px; max-width: 1040px; margin: 0 auto; }
+#explainer .sb-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--card); box-shadow: 0 30px 60px -40px rgb(7 10 16 / 0.35); }
+#explainer .frame { position: absolute; left: 0; top: 0; width: 960px; height: 540px; transform-origin: 0 0; transform: scale(var(--s, 1)); }
+#explainer .scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 400ms ease, visibility 0s 400ms; overflow: hidden; }
+#explainer .scene.active { opacity: 1; visibility: visible; transition: opacity 400ms ease; }
+#explainer .light { background: var(--card); color: var(--ink); }
+#explainer .dark { background: var(--deep); color: var(--deep-ink); }
+#explainer .sb-wash { position: absolute; inset: -20%; pointer-events: none; filter: blur(60px); opacity: 0.55;
+  background:
+    radial-gradient(28% 34% at 22% 30%, #3f6dff, transparent 70%),
+    radial-gradient(26% 30% at 70% 24%, #4f7dff, transparent 70%),
+    radial-gradient(30% 34% at 78% 78%, #86a6ff, transparent 70%),
+    radial-gradient(24% 28% at 30% 82%, #b8ccff, transparent 70%); }
+#explainer .light .sb-wash { opacity: 0.14; }
+#explainer .active .sb-wash { animation: sbDrift 14s ease-in-out infinite alternate; }
+@keyframes sbDrift { from { transform: translate(-3%, -2%) rotate(0deg); } to { transform: translate(3%, 2%) rotate(8deg); } }
+#explainer .tag { position: absolute; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+#explainer .light .tag { color: var(--violet); }
+#explainer .dark .tag { color: var(--deep-signal); }
+#explainer .tag.tl { left: 48px; top: 36px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes sbDraw { from { stroke-dashoffset: var(--len, 1000); } to { stroke-dashoffset: 0; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.6); } 70% { transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+#explainer .s1 .copy { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 22px; padding: 0 100px; }
+#explainer .s1 h2 { font-size: 60px; font-weight: 800; letter-spacing: -0.05em; line-height: 1.02; }
+#explainer .s1 .l2 { font-size: 34px; font-weight: 600; letter-spacing: -0.03em; color: var(--deep-signal); }
+#explainer .active.s1 h2 { animation: fadeUp 1s cubic-bezier(.2,.7,.2,1) both; }
+#explainer .active.s1 .l2 { animation: fadeUp 900ms 1.2s cubic-bezier(.2,.7,.2,1) both; }
+#explainer .s2 .sb-lesson { position: absolute; left: 48px; top: 84px; width: 500px; height: 330px; border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 12px; align-content: start; background: var(--card); }
+#explainer .s2 .sb-lesson h3, #explainer .s4 h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+#explainer .sb-bar { height: 9px; border-radius: 5px; background: var(--line); }
+#explainer .sb-formula { font-family: var(--mono); font-size: 14px; color: var(--ink-2); background: var(--surface-2); padding: 8px 12px; border-radius: 8px; width: fit-content; }
+#explainer .s2 .meter { position: absolute; right: 48px; top: 84px; width: 330px; height: 200px; border-radius: 18px; background: var(--deep); color: var(--deep-ink); padding: 24px; display: grid; align-content: space-between; }
+#explainer .s2 .meter .lbl { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--deep-ink-2); }
+@property --n { syntax: "<integer>"; initial-value: 38; inherits: false; }
+#explainer .sb-count { --n: 38; counter-reset: n var(--n); font-family: var(--mono); font-size: 92px; line-height: 1; letter-spacing: -0.05em; color: var(--deep-signal); }
+#explainer .sb-count::before { content: counter(n); }
+#explainer .sb-count small { font-size: 22px; color: var(--deep-ink-2); margin-left: 6px; letter-spacing: 0; }
+#explainer .active .sb-count { animation: countup 3s cubic-bezier(.3,.1,.3,1) both; }
+@keyframes countup { from { --n: 0; } to { --n: 38; } }
+#explainer .s2 .quiz { position: absolute; right: 48px; top: 300px; width: 330px; padding: 18px 20px; border-radius: 16px; border: 1px solid var(--line-2); background: var(--card); display: grid; gap: 8px; box-shadow: 0 20px 40px -30px rgb(7 10 16 / .5); }
+#explainer .s2 .quiz .q { font-size: 15px; color: var(--ink-2); }
+#explainer .s2 .quiz .verdict { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: #ff6b7a; }
+#explainer .s2 .quiz .verdict i { width: 22px; height: 22px; border-radius: 50%; background: #ff6b7a; color: #fff; font-style: normal; font-size: 14px; display: grid; place-items: center; }
+#explainer .active .quiz { animation: slideUp 700ms 3.2s cubic-bezier(.2,.7,.2,1) both; }
+#explainer .s2 .caption { position: absolute; left: 48px; bottom: 44px; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; }
+#explainer .active.s2 .caption { animation: fadeUp 800ms 4s both; }
+#explainer .s3 .center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 34px; padding: 0 110px; text-align: center; }
+#explainer .s3 .logo { display: flex; align-items: center; gap: 20px; }
+#explainer .s3 .tile { width: 96px; height: 96px; border-radius: 26px; background: var(--grad); display: grid; place-items: center; }
+#explainer .s3 .tile svg { width: 66px; height: 40px; }
+#explainer .s3 .tile path { --len: 60; stroke-dasharray: 60; }
+#explainer .active.s3 .tile { animation: pop 700ms cubic-bezier(.2,.7,.2,1) both; }
+#explainer .active.s3 .tile path { animation: sbDraw 1.2s 500ms ease-out both; }
+#explainer .s3 .word { font-size: 56px; font-weight: 800; letter-spacing: -0.05em; }
+#explainer .active.s3 .word { animation: fadeIn 700ms 900ms both; }
+#explainer .s3 .line { font-size: 30px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; max-width: 760px; }
+#explainer .s3 .line b { color: var(--violet); font-weight: 700; }
+#explainer .active.s3 .line { animation: wipe 1.4s 1.6s cubic-bezier(.6,.1,.2,1) both; }
+#explainer .s4 .sb-card { position: absolute; top: 76px; width: 420px; height: 330px; border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 10px; align-content: start; background: var(--card); }
+#explainer .s4 .before { left: 40px; }
+#explainer .s4 .after { left: 500px; border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
+#explainer .s4 .head { display: flex; justify-content: space-between; align-items: baseline; }
+#explainer .s4 .head span { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+#explainer .s4 .mini { width: 380px; height: 110px; margin-top: 4px; }
+#explainer .s4 .mini .thr { stroke: var(--ink-3); stroke-dasharray: 4 4; opacity: .6; }
+#explainer .s4 .mini .ln { stroke: url(#g4); stroke-width: 2.4; fill: none; stroke-dasharray: 1200; --len: 1200; }
+#explainer .active.s4 .mini .ln { animation: sbDraw 2.6s 300ms ease-in-out both; }
+#explainer .sb-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+#explainer .sb-chip { position: relative; font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); background: var(--surface-2); }
+#explainer .sb-chip.new { background: var(--accent-soft); color: var(--violet); border-color: color-mix(in srgb, var(--violet) 35%, transparent); }
+#explainer .active .sb-chip.new { animation: pop 500ms both; animation-delay: calc(2.4s + var(--d, 0s)); }
+#explainer .s4 .sb-graph { width: 380px; height: 96px; }
+#explainer .s4 .sb-graph .edge { stroke: var(--violet); stroke-width: 1.6; fill: none; }
+#explainer .s4 .sb-graph .node { fill: var(--accent-soft); stroke: var(--violet); stroke-width: 1.6; }
+#explainer .s4 .sb-graph text { font-family: var(--mono); font-size: 12px; fill: var(--ink); }
+#explainer .active.s4 .sb-graph { animation: fadeUp 700ms 2.6s both; }
+#explainer .sb-example { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink-2); padding: 10px 12px; border: 1px dashed var(--line-2); border-radius: 10px; }
+#explainer .sb-example b { color: var(--violet); font-weight: 500; }
+#explainer .active.s4 .sb-example { animation: fadeUp 700ms 2.9s both; }
+#explainer .okpill { display: inline-flex; align-items: center; gap: 8px; width: fit-content; font-family: var(--mono); font-size: 12px; padding: 6px 12px; border-radius: 999px; background: var(--deep); color: var(--deep-ink); }
+#explainer .okpill i { width: 8px; height: 8px; border-radius: 50%; background: var(--deep-signal); }
+#explainer .active.s4 .okpill { animation: fadeUp 600ms 3.3s both; }
+#explainer .s4 .pointers { position: absolute; inset: 0; pointer-events: none; }
+#explainer .s4 .pointers path { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 300; --len: 300; }
+#explainer .s4 .pointers circle { fill: var(--ink); }
+#explainer .active.s4 .pointers .p1 { animation: sbDraw 700ms 3.6s ease-out both; }
+#explainer .active.s4 .pointers .p2 { animation: sbDraw 700ms 4.2s ease-out both; }
+#explainer .active.s4 .pointers .p3 { animation: sbDraw 700ms 4.8s ease-out both; }
+#explainer .active.s4 .pointers .d1 { animation: fadeIn 300ms 4.2s both; }
+#explainer .active.s4 .pointers .d2 { animation: fadeIn 300ms 4.8s both; }
+#explainer .active.s4 .pointers .d3 { animation: fadeIn 300ms 5.4s both; }
+#explainer .s4 .call { position: absolute; top: 440px; width: 270px; padding: 12px 14px; border-radius: 12px; background: var(--deep); color: var(--deep-ink); font-size: 13px; line-height: 1.4; }
+#explainer .s4 .call b { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--deep-signal); font-weight: 500; margin-bottom: 3px; }
+#explainer .s4 .c1 { left: 40px; }
+#explainer .s4 .c2 { left: 345px; }
+#explainer .s4 .c3 { left: 650px; }
+#explainer .active.s4 .c1 { animation: fadeUp 500ms 3.4s both; }
+#explainer .active.s4 .c2 { animation: fadeUp 500ms 4s both; }
+#explainer .active.s4 .c3 { animation: fadeUp 500ms 4.6s both; }
+#explainer .s4 .sample { position: absolute; right: 40px; top: 40px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 10px; }
+#explainer .s5 h2 { position: absolute; left: 48px; top: 70px; font-size: 40px; font-weight: 800; letter-spacing: -0.045em; max-width: 700px; line-height: 1.05; }
+#explainer .active.s5 h2 { animation: fadeUp 800ms both; }
+#explainer .s5 .row { position: absolute; left: 48px; right: 48px; display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 20px; }
+#explainer .s5 .row .k { font-size: 15px; font-weight: 600; }
+#explainer .s5 .row .k small { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--deep-ink-2); margin-top: 2px; }
+#explainer .s5 .r1 { top: 186px; }
+#explainer .s5 .r2 { top: 236px; }
+#explainer .sb-dots { display: flex; justify-content: space-between; }
+#explainer .sb-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--deep-ink-2); }
+#explainer .active .sb-dots i { animation: fadeIn 200ms both; animation-delay: calc(var(--i) * 40ms + 600ms); }
+#explainer .s5 .span { width: 600px; height: 110px; }
+#explainer .s5 .span .ln { stroke: url(#g5); stroke-width: 2.6; fill: none; stroke-dasharray: 1400; --len: 1400; }
+#explainer .s5 .span .base { stroke: var(--deep-line); }
+#explainer .active.s5 .span .ln { animation: sbDraw 2.4s 1.6s ease-in-out both; }
+#explainer .s5 .sb-eqs { position: absolute; left: 48px; right: 48px; top: 384px; display: grid; gap: 10px; }
+#explainer .s5 .sb-eq { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: baseline; font-family: var(--mono); font-size: 16px; }
+#explainer .s5 .sb-eq span { font-family: var(--font); font-size: 14px; color: var(--deep-ink-2); }
+#explainer .active.s5 .sb-eq:nth-child(1) { animation: fadeUp 600ms 4.2s both; }
+#explainer .active.s5 .sb-eq:nth-child(2) { animation: fadeUp 600ms 4.8s both; }
+#explainer .active.s5 .sb-eq:nth-child(3) { animation: fadeUp 600ms 5.4s both; }
+#explainer .s6 .center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; gap: 30px; }
+#explainer .s6 h2 { font-size: 64px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; }
+#explainer .active.s6 h2 { animation: fadeUp 900ms both; }
+#explainer .s6 .btns { display: flex; gap: 12px; }
+#explainer .active.s6 .btns { animation: fadeUp 700ms 500ms both; }
+#explainer .sb-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; font-size: 16px; font-weight: 600; text-decoration: none; transition: transform 180ms; }
+#explainer .sb-btn:hover { transform: translateY(-1px); }
+#explainer .sb-btn-primary { background: var(--grad); color: #fff; }
+#explainer .sb-btn-ghost { border: 1px solid var(--deep-line); color: var(--deep-ink); background: rgb(255 255 255 / 0.04); }
+#explainer .s6 .fine { font-family: var(--mono); font-size: 13px; color: var(--deep-ink-2); }
+#explainer .active.s6 .fine { animation: fadeIn 700ms 1s both; }
+#explainer .sb-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+#explainer .sb-nav { font: 600 15px var(--font); padding: 11px 20px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); cursor: pointer; transition: border-color 150ms, transform 150ms; }
+#explainer .sb-nav:hover { border-color: var(--violet); }
+#explainer .sb-nav:disabled { opacity: 0.4; cursor: default; }
+#explainer .sb-nav:focus-visible, #explainer .sb-dot:focus-visible, #explainer .sb-btn:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+#explainer .sb-dotrow { display: flex; gap: 10px; align-items: center; }
+#explainer .sb-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line-2); background: transparent; padding: 0; cursor: pointer; transition: background 200ms, border-color 200ms, width 200ms; }
+#explainer .sb-dot[aria-current="true"] { width: 30px; border-radius: 6px; background: var(--grad); border-color: transparent; }
+#explainer .sb-title { font-family: var(--mono); font-size: 12px; color: var(--ink-3); text-align: center; }
+@media (max-width: 520px) { #explainer .sb-nav { padding: 10px 14px; font-size: 14px; }
+#explainer .sb-dotrow { gap: 7px; } }
+@media (prefers-reduced-motion: reduce) { #explainer *, #explainer *::before, #explainer *::after { animation: none !important; transition: none !important; } }
+
+/* ------------------------------------------------------------------ Built-with strip */
+.strip { padding-block: 34px; border-bottom: 1px solid var(--line); overflow: hidden; }
+.strip-row { display: flex; align-items: center; gap: 28px; }
+.strip-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.marquee { flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee-track { display: flex; gap: 56px; width: max-content; animation: marquee 32s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (max-width: 640px) { .strip-row { flex-direction: column; align-items: flex-start; gap: 14px; } .marquee { width: 100%; } }
+
+/* ------------------------------------------------------------------ Explainer section */
+.explainer-section { padding-block: clamp(80px, 9vw, 120px) clamp(60px, 7vw, 90px); }
+.center-head { text-align: center; margin-inline: auto; justify-items: center; }
+.center-head .lede { margin-inline: auto; }
+
+/* ------------------------------------------------------------------ Features bento */
+.fbento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.feat { position: relative; overflow: hidden; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); padding: 26px; display: grid; gap: 10px; align-content: start; transition: border-color 250ms, transform 250ms; }
+.feat:hover { border-color: var(--line-2); transform: translateY(-3px); }
+.feat h3 { font-size: 21px; letter-spacing: -0.02em; line-height: 1.2; }
+.feat p { font-size: 15px; color: var(--ink-2); max-width: 46ch; }
+.feat .mock { margin-top: 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); padding: 16px; min-height: 150px; position: relative; overflow: hidden; }
+.feat .mock.deep { background: var(--deep); border-color: var(--deep); color: #e9eef7; }
+.f7 { grid-column: span 7; } .f5 { grid-column: span 5; } .f6 { grid-column: span 6; }
+@media (max-width: 960px) { .f7, .f5, .f6 { grid-column: span 12; } }
+.spark { width: 100%; height: 110px; display: block; }
+.spark path { fill: none; stroke: url(#sparkGrad); stroke-width: 2.4; stroke-linejoin: round; stroke-dasharray: 1; vector-effect: non-scaling-stroke; animation: sparkDraw 6s ease-in-out infinite; }
+@keyframes sparkDraw { 0% { stroke-dashoffset: 1; } 60%, 100% { stroke-dashoffset: 0; } }
+.mock-read { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-mono); font-size: 12px; color: #9aa6b8; }
+.mock-read b { font-size: 30px; font-weight: 500; color: #9db8ff; letter-spacing: -0.03em; }
+.cal-row { display: grid; grid-template-columns: 90px 1fr auto; align-items: center; gap: 12px; font-size: 14px; padding-block: 8px; }
+.cal-row + .cal-row { border-top: 1px solid var(--line); }
+.cal-bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.cal-bar i { display: block; height: 100%; width: 100%; background: var(--grad); transform-origin: left; animation: fill 3s ease-out infinite alternate; }
+.cal-row:nth-child(2) .cal-bar i { animation-delay: .6s; }
+@keyframes fill { from { transform: scaleX(0.05); } to { transform: scaleX(1); } }
+.cal-ok { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+.swap { display: flex; flex-wrap: wrap; gap: 8px; }
+.swap span { position: relative; font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); }
+.swap span::after { content: attr(data-b); position: absolute; inset: -1px; display: grid; place-items: center; border-radius: 999px; background: var(--accent-soft); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); animation: swap 5s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes swap { 0%, 35% { opacity: 0; } 45%, 85% { opacity: 1; } 100% { opacity: 0; } }
+.swap-note { margin-top: 14px; font-size: 13px; color: var(--ink-3); }
+.why-panel { display: grid; gap: 10px; font-size: 14px; }
+.why-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cell { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border-radius: 999px; background: #14203a; color: #b8ccff; }
+.why-change { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; align-items: baseline; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.why-change b { font-weight: 600; }
+.why-change code { font-size: 12px; color: var(--accent); }
+.why-change span { color: var(--ink-2); font-size: 13px; }
+.head-map { width: 100%; height: 150px; display: block; }
+.head-map .skull { fill: none; stroke: #2a3445; stroke-width: 1.5; }
+.head-map .el { animation: el 4s ease-in-out infinite; }
+.head-map text { font-family: var(--font-mono); font-size: 10px; fill: #9aa6b8; }
+@keyframes el { 0%, 100% { fill: #3f6dff; } 50% { fill: #86a6ff; } }
+.bands { display: flex; align-items: flex-end; gap: 12px; height: 120px; padding-top: 8px; }
+.bands div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; height: 100%; }
+.bands { height: 180px; }
+.bands i { width: 100%; border-radius: 6px 6px 2px 2px; background: var(--grad); transform-origin: bottom; animation: band 3.2s ease-in-out infinite alternate; animation-delay: var(--d); height: var(--h); }
+.bands span { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+@keyframes band { from { transform: scaleY(0.45); } to { transform: scaleY(1); } }
+
+/* ------------------------------------------------------------------ Recognition carousel */
+.accolades { padding-block: 30px; border-bottom: 1px solid var(--line); overflow: hidden; }
+.acc-row { display: flex; align-items: center; gap: 28px; }
+.acc-track { gap: 16px; animation-duration: 30s; }
+.marquee:hover .acc-track { animation-play-state: paused; }
+.acc { display: flex; align-items: center; gap: 14px; padding: 12px 22px 12px 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.acc-logo { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line-2); font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: -0.02em; color: var(--signal); overflow: hidden; }
+.acc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.acc-text { display: grid; line-height: 1.25; }
+.acc-text b { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+.acc-text small { font-size: 13px; color: var(--ink-3); }
+@media (max-width: 640px) { .acc-row { flex-direction: column; align-items: flex-start; gap: 14px; } .acc-row .marquee { width: 100%; } }
+
+/* ------------------------------------------------------------------ 3D brain card */
+.brain-mock { position: relative; height: 300px; padding: 0; }
+.brain-mock .bm-host { position: absolute; inset: 0; cursor: grab; touch-action: pan-y; }
+.brain-mock .bm-host:active { cursor: grabbing; }
+.bm-canvas { display: block; width: 100%; height: 100%; }
+.bm-labels { position: absolute; inset: 0; pointer-events: none; }
+.bm-marker { padding: 2px 7px; border-radius: 6px; background: rgb(7 10 16 / 0.8); border: 1px solid #2a3445; color: #c5cfde; font-family: var(--font-mono); font-size: 11px; white-space: nowrap; transition: border-color 300ms, color 300ms; }
+.bm-marker.is-top { border-color: #9db8ff; color: #ffffff; }
+.bm-legend { position: absolute; left: 16px; bottom: 14px; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; color: #9aa6b8; pointer-events: none; }
+.bm-legend i { width: 90px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #2f6fd0, #7fb0e6, #d8d1c6, #f2b562, #e2482b); }
+.bm-sample { position: absolute; right: 14px; top: 12px; font-family: var(--font-mono); font-size: 11px; color: #9aa6b8; border: 1px solid #2a3445; border-radius: 999px; padding: 3px 9px; pointer-events: none; }
+#brain3d[data-failed]::after { content: "WebGL isn't available in this browser, so the 3D view can't start."; position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: #9aa6b8; font-size: 14px; }
+
+/* ------------------------------------------------------------------ Contact */
+.nav-contact { padding: 8px 16px; font-size: 14px; }
+@media (max-width: 880px) { .nav-contact { display: none; } }
+.contact { position: relative; overflow: hidden; padding-block: clamp(90px, 10vw, 140px); border-top: 1px solid var(--line); }
+.contact .wrap { position: relative; }
+.contact-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: clamp(32px, 6vw, 80px); align-items: center; }
+.contact h2 { font-size: clamp(36px, 4.6vw, 62px); font-weight: 800; letter-spacing: -0.045em; margin-top: 18px; }
+.contact .lede { margin-top: 20px; }
+.contact-card { display: grid; gap: 14px; padding: 28px; border-radius: 22px; border: 1px solid var(--line-2); background: rgb(11 15 22 / 0.85); }
+.btn-lg { justify-content: center; padding: 16px 24px; font-size: 17px; }
+.contact-card .btn-ghost { justify-content: center; }
+.email-row { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
+.email-row code { flex: 1; min-width: 0; font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; user-select: all; }
+.copy-btn { flex: none; font: 600 12px var(--font-body); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); cursor: pointer; }
+.copy-btn:hover { border-color: var(--signal); }
+@media (max-width: 860px) { .contact-grid { grid-template-columns: 1fr; } }
+.site-footer { padding-block: 28px; border-top: 1px solid var(--line); }
+.foot-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="NeuroAdapt home">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 20 12"><path d="M0 6h4l2-5 3 10 3-8 2 3h6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+      NeuroAdapt
+    </a>
+    <div class="nav-links">
+      <a href="#explainer-section">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#pipeline">How it works</a>
+      <a href="#technology">Technology</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <a class="btn btn-ghost nav-contact" href="https://outlook.office.com/mail/deeplink/compose?to=alexander.w.fagell.30%40dartmouth.edu&amp;subject=NeuroAdapt" target="_blank" rel="noopener">Get in touch</a>
+    <a class="btn btn-primary" href="https://www.youtube.com/watch?v=NLZuqNi_TjE" target="_blank" rel="noopener">Watch the demo</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wash" style="opacity:.18"></div>
+  <canvas id="ridge" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        
+        <h1>An AI tutor that adapts to your <span class="trace">attention.<svg viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="traceGrad" x1="0" x2="1"><stop offset="0" stop-color="#3f6dff"/><stop offset=".5" stop-color="#4f7dff"/><stop offset="1" stop-color="#86a6ff"/></linearGradient></defs><path d="M0 15 L40 15 L52 4 L64 26 L76 9 L88 20 L100 15 L150 15 L165 22 L180 25 L200 24 L220 14 L240 8 L300 8"/></svg></span></h1>
+        <p class="lede">NeuroAdapt reads a continuous attention signal from a 4-channel EEG headset while you study. When attention drops, it re-renders the lesson in a different format <mark>before you reach the question.</mark></p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#pipeline">How it works <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="https://www.youtube.com/watch?v=NLZuqNi_TjE" target="_blank" rel="noopener">Watch the demo</a>
+        </div>
+      </div>
+
+      <div class="scope" aria-label="Live attention readout with sample data">
+        <div class="scope-head"><span class="live-dot"></span>Ganglion · 4 ch · 200 Hz<span class="sim">sample data</span></div>
+        <canvas id="heroCanvas" aria-hidden="true"></canvas>
+        <div class="scope-read">
+          <div><div class="span-label">Attention span</div><div class="span-num tabular" id="heroSpan">0.71</div></div>
+          <div><div class="span-label">0 relaxed · 1 focused</div><div class="span-bar"><div class="span-fill" id="heroFill" style="width:71%"></div><div class="span-thr"></div></div></div>
+        </div>
+        <div class="agent-line" aria-live="polite"><span class="tag" id="heroTag">Monitor</span><span class="txt" id="heroTxt">Span 0.71, stable. No style change.</span></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b><span class="count" data-to="4">4</span><small>ch</small></b><span>EEG channels</span></div>
+      <div class="stat"><b><span class="count" data-to="200">200</span><small>Hz</small></b><span>sampling rate</span></div>
+      <div class="stat"><b><span class="count" data-to="250">250</span><small>ms</small></b><span>between attention updates</span></div>
+      <div class="stat"><b>0–1</b><span>span, calibrated per learner</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="accolades" aria-label="Recognition">
+  <div class="wrap acc-row">
+    <span class="strip-label">Recognition</span>
+    <div class="marquee">
+      <div class="marquee-track acc-track">
+        <div class="acc"><span class="acc-logo" data-logo="AI@70 · Dartmouth">AI@70</span><span class="acc-text"><b>Honorable Mention</b><small>AI@70 · Dartmouth</small></span></div><div class="acc"><span class="acc-logo" data-logo="Anthropic">A</span><span class="acc-text"><b>Endorsed by Anthropic</b><small>Anthropic</small></span></div><div class="acc"><span class="acc-logo" data-logo="Technigala · Dartmouth">2nd</span><span class="acc-text"><b>2nd Place</b><small>Technigala · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="AI@70 · Dartmouth">AI@70</span><span class="acc-text"><b>Honorable Mention</b><small>AI@70 · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Anthropic">A</span><span class="acc-text"><b>Endorsed by Anthropic</b><small>Anthropic</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Technigala · Dartmouth">2nd</span><span class="acc-text"><b>2nd Place</b><small>Technigala · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="AI@70 · Dartmouth">AI@70</span><span class="acc-text"><b>Honorable Mention</b><small>AI@70 · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Anthropic">A</span><span class="acc-text"><b>Endorsed by Anthropic</b><small>Anthropic</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Technigala · Dartmouth">2nd</span><span class="acc-text"><b>2nd Place</b><small>Technigala · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="AI@70 · Dartmouth">AI@70</span><span class="acc-text"><b>Honorable Mention</b><small>AI@70 · Dartmouth</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Anthropic">A</span><span class="acc-text"><b>Endorsed by Anthropic</b><small>Anthropic</small></span></div><div class="acc" aria-hidden="true"><span class="acc-logo" data-logo="Technigala · Dartmouth">2nd</span><span class="acc-text"><b>2nd Place</b><small>Technigala · Dartmouth</small></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="explainer-section" id="explainer-section">
+  <div class="wrap">
+    <div class="section-head center-head reveal">
+      <p class="eyebrow">Overview</p>
+      <h2 class="split">NeuroAdapt in <span class="hl">six scenes.</span></h2>
+      <p class="lede">It plays on its own while it's on screen. Use the arrows or the dots to step through.</p>
+    </div>
+    <div class="explainer-wrap" id="explainer">
+      <div class="sb-stage" id="stage" role="region" aria-roledescription="carousel" aria-label="NeuroAdapt explainer">
+    <div class="frame" id="frame">
+
+      <section class="scene dark s1" aria-label="Scene 1 of 6: Hook">
+        <div class="sb-wash"></div>
+        <div class="copy">
+          <h2>You stopped paying attention two paragraphs ago.</h2>
+          <p class="l2">Your tutor didn't notice.</p>
+        </div>
+      </section>
+
+      <section class="scene light s2" aria-label="Scene 2 of 6: Problem">
+        <span class="tag tl">The problem</span>
+        <div class="sb-lesson">
+          <h3>The chain rule</h3>
+          <div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:94%"></div><div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:86%"></div>
+          <div class="sb-formula">∂L/∂w = ∂L/∂y · ∂y/∂w</div>
+          <div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:91%"></div><div class="sb-bar" style="width:97%"></div><div class="sb-bar" style="width:72%"></div><div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:58%"></div>
+        </div>
+        <div class="meter">
+          <span class="lbl">Seconds distracted</span>
+          <div class="sb-count" aria-label="38 seconds"><small>s</small></div>
+        </div>
+        <div class="quiz">
+          <span class="q">Q3 · Apply the chain rule to a two-layer network.</span>
+          <span class="verdict"><i aria-hidden="true">×</i>Incorrect</span>
+        </div>
+        <p class="caption">Learning apps only find out after the mistake.</p>
+      </section>
+
+      <section class="scene light s3" aria-label="Scene 3 of 6: Product">
+        <div class="sb-wash"></div>
+        <div class="center">
+          <div class="logo">
+            <span class="tile"><svg viewBox="0 0 20 12" aria-hidden="true"><path d="M0 6h4l2-5 3 10 3-8 2 3h6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+            <span class="word">NeuroAdapt</span>
+          </div>
+          <p class="line">NeuroAdapt reads your attention from a <b>4-channel EEG headset</b> and rewrites the lesson <b>before you fall behind.</b></p>
+        </div>
+      </section>
+
+      <section class="scene light s4" aria-label="Scene 4 of 6: Demo">
+        <span class="tag tl">One lesson, live</span>
+        <span class="sample">sample data</span>
+        <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><linearGradient id="g4" x1="0" x2="1"><stop offset="0" stop-color="#3f6dff"/><stop offset=".5" stop-color="#4f7dff"/><stop offset="1" stop-color="#86a6ff"/></linearGradient></defs></svg>
+        <div class="sb-card before">
+          <div class="head"><h3>Before</h3><span>dense text</span></div>
+          <div class="sb-chips"><span class="sb-chip">1 diagram</span><span class="sb-chip">long chunks</span><span class="sb-chip">formal</span></div>
+          <div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:93%"></div><div class="sb-bar" style="width:100%"></div><div class="sb-bar" style="width:80%"></div>
+          <svg class="mini" viewBox="0 0 400 120" aria-label="Attention span drops below the 0.45 threshold, then recovers">
+            <line class="thr" x1="0" x2="400" y1="66" y2="66"/>
+            <path class="ln" d="M0.0,34.6L2.5,34.2L5.0,39.0L7.5,36.3L10.0,38.0L12.5,45.0L15.0,39.8L17.5,31.3L20.0,36.1L22.5,40.5L25.0,37.4L27.5,40.5L30.0,43.3L32.5,34.6L35.0,31.4L37.5,39.8L40.0,41.6L42.5,38.0L45.0,40.8L47.5,39.5L50.0,31.7L52.5,34.8L55.0,43.3L57.5,41.1L60.0,37.3L62.5,39.4L65.0,36.1L67.5,32.4L70.0,39.7L72.5,44.6L75.0,38.6L77.5,35.9L80.0,37.8L82.5,35.0L85.0,35.8L87.5,43.3L90.0,42.8L92.5,35.3L95.0,35.0L97.5,37.5L100.0,36.5L102.5,39.6L105.0,43.8L107.5,38.8L110.0,33.0L112.5,35.9L115.0,39.0L117.5,39.0L120.0,42.5L122.5,44.7L125.0,41.8L127.5,44.0L130.0,53.7L132.5,61.1L135.0,65.2L137.5,70.0L140.0,71.8L142.5,71.5L145.0,76.6L147.5,84.2L150.0,85.5L152.5,82.7L155.0,81.0L157.5,79.1L160.0,78.6L162.5,82.6L165.0,86.5L167.5,84.3L170.0,80.0L172.5,78.9L175.0,79.8L177.5,81.5L180.0,84.9L182.5,85.9L185.0,81.4L187.5,77.5L190.0,79.4L192.5,82.6L195.0,83.8L197.5,84.8L200.0,83.5L202.5,78.5L205.0,77.2L207.5,82.4L210.0,85.3L212.5,83.6L215.0,82.9L217.5,81.0L220.0,77.1L222.5,79.6L225.0,86.1L227.5,85.5L230.0,81.2L232.5,80.9L235.0,79.7L237.5,78.0L240.0,83.3L242.5,87.9L245.0,81.9L247.5,76.0L250.0,76.0L252.5,72.9L255.0,69.7L257.5,72.1L260.0,68.3L262.5,56.0L265.0,50.9L267.5,51.7L270.0,47.3L272.5,44.7L275.0,46.3L277.5,39.1L280.0,29.8L282.5,33.3L285.0,38.2L287.5,35.3L290.0,36.2L292.5,37.9L295.0,30.2L297.5,27.2L300.0,35.7L302.5,37.9L305.0,32.8L307.5,34.3L310.0,33.8L312.5,26.8L315.0,30.0L317.5,39.3L320.0,36.2L322.5,30.6L325.0,33.3L327.5,31.5L330.0,27.5L332.5,35.1L335.0,40.4L337.5,32.3L340.0,28.9L342.5,33.3L345.0,30.9L347.5,30.4L350.0,39.0L352.5,37.8L355.0,27.9L357.5,29.2L360.0,34.4L362.5,31.6L365.0,33.8L367.5,39.5L370.0,32.7L372.5,25.6L375.0,32.1L377.5,36.0L380.0,32.5L382.5,35.5L385.0,36.9L387.5,28.0L390.0,26.9L392.5,36.2L395.0,36.6L397.5,32.5L400.0,35.2"/>
+          </svg>
+        </div>
+        <div class="sb-card after">
+          <div class="head"><h3>After re-render</h3><span>visual</span></div>
+          <div class="sb-chips"><span class="sb-chip new" style="--d:0s">3 diagrams</span><span class="sb-chip new" style="--d:.12s">short chunks</span><span class="sb-chip new" style="--d:.24s">worked example</span></div>
+          <svg class="sb-graph" viewBox="0 0 380 96" aria-label="Computation graph: w and x feed y, y feeds loss L">
+            <defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:#3f6dff"/></marker></defs>
+            <path class="edge" d="M62 24 L156 44" marker-end="url(#ah4)"/><path class="edge" d="M62 72 L156 52" marker-end="url(#ah4)"/><path class="edge" d="M206 48 L282 48" marker-end="url(#ah4)"/>
+            <circle class="node" cx="42" cy="22" r="18"/><circle class="node" cx="42" cy="74" r="18"/><circle class="node" cx="182" cy="48" r="22"/><rect class="node" x="288" y="30" width="56" height="36" rx="10"/>
+            <text x="42" y="26" text-anchor="middle">w</text><text x="42" y="78" text-anchor="middle">x</text><text x="182" y="52" text-anchor="middle">y</text><text x="316" y="52" text-anchor="middle">L</text>
+          </svg>
+          <div class="sb-example">w = 2, x = 3 → y = 6. If ∂L/∂y = 0.5, <b>∂L/∂w = 0.5 × 3 = 1.5</b></div>
+          <span class="okpill"><i></i>span 0.68 · recovered</span>
+        </div>
+        <svg class="pointers" viewBox="0 0 960 540" aria-hidden="true">
+          <path class="p1" d="M175 440 L175 400 L222 332"/><circle class="d1" cx="222" cy="332" r="4"/>
+          <path class="p2" d="M480 440 L480 146 L520 146"/><circle class="d2" cx="520" cy="146" r="4"/>
+          <path class="p3" d="M785 440 L785 400 L714 358"/><circle class="d3" cx="714" cy="358" r="4"/>
+        </svg>
+        <div class="call c1"><b>1 · Detect</b>Span 0.71 → 0.30, 7 s under threshold. All 4 channels agree.</div>
+        <div class="call c2"><b>2 · Re-render</b>Diagrams 1 → 3, worked example added, chunks shortened.</div>
+        <div class="call c3"><b>3 · Recover</b>Span back to 0.68 in 12 s. Diagram weight raised.</div>
+      </section>
+
+      <section class="scene dark s5" aria-label="Scene 5 of 6: Technical proof">
+        <div class="sb-wash" style="opacity:.25"></div>
+        <span class="tag tl">Under the hood</span>
+        <h2>The stock headset light is on the whole time.</h2>
+        <div class="row r1"><span class="k">Standard on/off<small>p &gt; T, thresholded</small></span><div class="sb-dots" id="sbDots"></div></div>
+        <div class="row r2"><span class="k">NeuroAdapt span<small>0 to 1, same 60 s</small></span>
+          <svg class="span" viewBox="0 0 600 110" aria-label="Continuous span over the same minute, showing the dip">
+            <defs><linearGradient id="g5" x1="0" x2="1"><stop offset="0" stop-color="#9db8ff"/><stop offset=".55" stop-color="#7fa2ff"/><stop offset="1" stop-color="#c3d3ff"/></linearGradient></defs>
+            <line class="base" x1="0" x2="600" y1="102" y2="102"/>
+            <path class="ln" d="M0.0,35.7L3.8,34.7L7.5,31.7L11.2,34.0L15.0,34.6L18.8,32.7L22.5,34.1L26.2,33.4L30.0,39.9L33.8,39.6L37.5,39.7L41.2,34.3L45.0,30.8L48.8,32.3L52.5,32.6L56.2,36.8L60.0,33.8L63.8,36.0L67.5,36.0L71.2,39.3L75.0,40.0L78.8,35.3L82.5,33.1L86.2,28.4L90.0,33.2L93.8,34.5L97.5,37.8L101.2,36.9L105.0,36.0L108.8,39.3L112.5,39.5L116.2,42.9L120.0,38.6L123.8,39.4L127.5,40.6L131.2,47.1L135.0,54.7L138.8,56.8L142.5,60.5L146.2,58.8L150.0,64.0L153.8,65.0L157.5,67.2L161.2,66.3L165.0,65.3L168.8,70.8L172.5,73.9L176.2,80.7L180.0,78.0L183.8,76.7L187.5,73.5L191.2,73.0L195.0,75.0L198.8,72.1L202.5,73.0L206.2,70.1L210.0,75.5L213.8,78.1L217.5,80.4L221.2,78.5L225.0,72.8L228.8,72.8L232.5,70.7L236.2,75.0L240.0,72.9L243.8,73.5L247.5,73.8L251.2,76.0L255.0,80.7L258.8,78.0L262.5,76.8L266.2,70.0L270.0,70.8L273.8,71.9L277.5,74.5L281.2,76.3L285.0,73.8L288.8,76.8L292.5,76.2L296.2,80.0L300.0,76.3L303.8,72.8L307.5,69.8L311.2,69.3L315.0,75.1L318.8,75.6L322.5,78.6L326.2,75.0L330.0,76.4L333.8,76.7L337.5,76.4L341.2,75.4L345.0,69.4L348.8,70.7L352.5,70.7L356.2,77.5L360.0,78.6L363.8,78.1L367.5,76.3L371.2,73.5L375.0,76.4L378.8,73.4L382.5,74.0L386.2,69.5L390.0,71.3L393.8,74.9L397.5,78.3L401.2,81.1L405.0,75.7L408.8,74.4L412.5,69.8L416.2,71.4L420.0,69.5L423.8,66.7L427.5,65.2L431.2,62.9L435.0,67.4L438.8,65.4L442.5,64.7L446.2,56.5L450.0,51.4L453.8,49.0L457.5,47.2L461.2,48.4L465.0,43.2L468.8,43.6L472.5,41.1L476.2,43.8L480.0,42.6L483.8,37.8L487.5,33.5L491.2,27.5L495.0,30.8L498.8,30.9L502.5,34.8L506.2,33.1L510.0,32.7L513.8,34.5L517.5,34.2L521.2,36.0L525.0,29.5L528.8,28.0L532.5,25.1L536.2,29.2L540.0,33.1L543.8,33.5L547.5,34.3L551.2,30.2L555.0,33.1L558.8,31.2L562.5,31.8L566.2,27.7L570.0,25.0L573.8,27.5L577.5,29.7L581.2,36.1L585.0,33.7L588.8,33.5L592.5,29.6L596.2,29.9L600.0,30.9"/>
+          </svg>
+        </div>
+        <div class="sb-eqs">
+          <div class="sb-eq"><code>s = ln(p / (1 − p)) = w · x</code><span>Undo the sigmoid.</span></div>
+          <div class="sb-eq"><code>s̃ ← s̃ + (1 − e<sup>−Δt/τ</sup>)(s − s̃), τ = 4 s</code><span>Smooth over time.</span></div>
+          <div class="sb-eq"><code>span = (s̃ − L) / (H − L)</code><span>Scale to your Relaxed and Focused states.</span></div>
+        </div>
+      </section>
+
+      <section class="scene dark s6" aria-label="Scene 6 of 6: Call to action">
+        <div class="sb-wash" style="opacity:.7"></div>
+        <div class="center">
+          <h2>See the full loop running.</h2>
+          <div class="btns">
+            <a class="sb-btn btn-primary" href="https://www.youtube.com/watch?v=NLZuqNi_TjE" target="_blank" rel="noopener">Watch the demo →</a>
+            <a class="sb-btn btn-ghost" href="#stage" id="restart">Replay explainer</a>
+          </div>
+          <p class="fine">Research prototype · simulated attention in this explainer · not a medical device</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="sb-controls">
+    <button class="sb-nav" id="prev" type="button" aria-label="Previous scene">← Prev</button>
+    <div>
+      <div class="sb-dotrow" id="dotrow" role="tablist" aria-label="Scenes"></div>
+    </div>
+    <button class="sb-nav" id="next" type="button" aria-label="Next scene">Next →</button>
+  </div>
+  <p class="sb-title" id="sceneTitle">1 / 6 · Hook</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features" style="padding-top:0">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Features</p>
+      <h2 class="split">Everything the loop needs, <span class="hl">in one app.</span></h2>
+      <p class="lede">From the raw headset signal to the lesson on screen, each piece is built and working together.</p>
+    </div>
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><linearGradient id="sparkGrad" x1="0" x2="1"><stop offset="0" stop-color="#9db8ff"/><stop offset=".55" stop-color="#7fa2ff"/><stop offset="1" stop-color="#c3d3ff"/></linearGradient></defs></svg>
+    <div class="fbento">
+      <article class="feat f7 reveal">
+        <h3>Live attention span</h3>
+        <p>A continuous 0–1 span from four EEG channels, updated every 250 ms and smoothed with a 4 s time constant.</p>
+        <div class="mock deep">
+          <div class="mock-read"><span>attention span · last 60 s</span><b>0.71</b></div>
+          <svg class="spark" viewBox="0 0 600 110" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M0.0,37.7L3.8,36.2L7.5,36.1L11.2,36.5L15.0,29.4L18.8,32.1L22.5,36.0L26.2,40.1L30.0,38.2L33.8,33.4L37.5,36.4L41.2,33.1L45.0,32.4L48.8,32.2L52.5,37.3L56.2,41.9L60.0,35.7L63.8,34.2L67.5,32.3L71.2,34.6L75.0,33.6L78.8,32.8L82.5,39.9L86.2,39.3L90.0,37.0L93.8,30.8L97.5,31.8L101.2,36.0L105.0,33.8L108.8,36.7L112.5,37.4L116.2,40.0L120.0,35.0L123.8,29.2L127.5,33.2L131.2,35.0L135.0,38.3L138.8,36.0L142.5,39.1L146.2,42.3L150.0,38.6L153.8,40.3L157.5,43.7L161.2,54.7L165.0,58.5L168.8,59.0L172.5,64.0L176.2,65.1L180.0,67.7L183.8,65.3L187.5,71.5L191.2,78.9L195.0,78.0L198.8,76.4L202.5,72.0L206.2,75.0L210.0,72.5L213.8,70.7L217.5,75.5L221.2,78.3L225.0,80.5L228.8,72.8L232.5,71.8L236.2,73.5L240.0,72.9L243.8,74.4L247.5,74.1L251.2,80.7L255.0,77.8L258.8,72.2L262.5,70.8L266.2,71.9L270.0,76.9L273.8,73.8L277.5,76.7L281.2,78.7L285.0,76.3L288.8,72.4L292.5,68.0L296.2,75.1L300.0,76.6L303.8,76.6L307.5,76.4L311.2,75.9L315.0,76.9L318.8,69.4L322.5,70.6L326.2,74.8L330.0,78.6L333.8,78.4L337.5,73.3L341.2,76.4L345.0,73.4L348.8,71.4L352.5,71.3L356.2,75.3L360.0,81.5L363.8,75.7L367.5,73.1L371.2,70.2L375.0,69.5L378.8,66.9L382.5,62.6L386.2,67.4L390.0,65.1L393.8,60.0L397.5,51.4L401.2,47.5L405.0,48.9L408.8,43.2L412.5,43.1L416.2,42.2L420.0,42.6L423.8,37.1L427.5,28.4L431.2,30.8L435.0,31.7L438.8,34.6L442.5,32.7L446.2,33.8L450.0,36.3L453.8,29.5L457.5,27.3L461.2,26.7L465.0,33.1L468.8,34.6L472.5,30.9L476.2,33.1L480.0,30.9L483.8,30.0L487.5,25.0L491.2,27.5L495.0,34.7L498.8,33.7L502.5,32.9L506.2,28.7L510.0,30.9L513.8,29.0L517.5,25.6L521.2,30.5L525.0,33.5L528.8,36.6L532.5,30.0L536.2,27.7L540.0,29.8L543.8,28.1L547.5,29.6L551.2,29.3L555.0,36.0L558.8,34.9L562.5,28.6L566.2,27.3L570.0,27.1L573.8,32.0L577.5,29.3L581.2,31.6L585.0,35.2L588.8,32.7L592.5,29.4L596.2,23.9L600.0,29.8"/></svg>
+        </div>
+      </article>
+      <article class="feat f5 reveal">
+        <h3>Personal calibration</h3>
+        <p>Capture a relaxed and a focused state. Their means become 0 and 1 on your scale.</p>
+        <div class="mock">
+          <div class="cal-row"><span>Relaxed</span><div class="cal-bar"><i></i></div><span class="cal-ok">60 s</span></div>
+          <div class="cal-row"><span>Focused</span><div class="cal-bar"><i></i></div><span class="cal-ok">60 s</span></div>
+          <div class="cal-row"><span>Span</span><span class="mono" style="font-size:13px;color:var(--ink-2)">(s̃ − L) / (H − L)</span><span class="cal-ok">ready</span></div>
+        </div>
+      </article>
+      <article class="feat f5 reveal">
+        <h3>Adaptive lesson style</h3>
+        <p>Depth, diagrams, examples, section length and tone, adjusted at most two at a time.</p>
+        <div class="mock">
+          <div class="swap">
+            <span data-b="3 diagrams" style="--d:0s">1 diagram</span>
+            <span data-b="2 examples" style="--d:.4s">1 example</span>
+            <span data-b="short chunks" style="--d:.8s">long chunks</span>
+            <span data-b="level 2" style="--d:1.2s">level 3</span>
+            <span data-b="socratic" style="--d:1.6s">formal</span>
+          </div>
+          <p class="swap-note">Example style change after a low-attention lesson.</p>
+        </div>
+      </article>
+      <article class="feat f7 reveal">
+        <h3>Why it changed</h3>
+        <p>Every lesson ends with its outcome and a one-line reason for each style change, so the learner can see the tutor's logic.</p>
+        <div class="mock">
+          <div class="why-panel">
+            <div class="why-top"><b>Lesson 2 · The chain rule</b><span class="cell">partial / low attention</span></div>
+            <div class="why-change"><b>Diagrams</b><code>1 → 3</code><span>Your attention held best during diagrams.</span></div>
+            <div class="why-change"><b>Section length</b><code>long → short</code><span>Attention fell faster than 0.15 per minute.</span></div>
+          </div>
+        </div>
+      </article>
+      <article class="feat f7 reveal">
+        <h3>3D brain map</h3>
+        <p>The app's procedural cortex, colored by each electrode's activity against its own baseline. Drag to rotate.</p>
+        <div class="mock deep brain-mock">
+          <div id="brain3d" class="bm-host" role="img" aria-label="3D brain colored by sample activity at F3, F4, O1 and O2. Drag to rotate."></div>
+          <div class="bm-legend"><span>quieter</span><i></i><span>more active</span></div>
+          <span class="bm-sample">sample data</span>
+        </div>
+      </article>
+      <article class="feat f5 reveal">
+        <h3>Focus dashboard</h3>
+        <p>Raw traces, relative band power, span history, state distributions and the stock readout side by side.</p>
+        <div class="mock">
+          <div class="bands">
+            <div><i style="--h:30%;--d:0s"></i><span>δ</span></div>
+            <div><i style="--h:44%;--d:.3s"></i><span>θ</span></div>
+            <div><i style="--h:62%;--d:.6s"></i><span>α</span></div>
+            <div><i style="--h:92%;--d:.9s"></i><span>β</span></div>
+            <div><i style="--h:40%;--d:1.2s"></i><span>γ</span></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pipeline" style="padding-top:0">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">How it works</p>
+      <h2 class="split">From EEG to lesson in <span class="hl">five stages.</span></h2>
+      <p class="lede">The headset streams raw EEG. The pipeline turns it into an attention span four times a second, and a rule-based policy combines that span with your answers to decide how the next lesson is written.</p>
+    </div>
+    <div class="pipe" id="pipe">
+      <div class="stage reveal" style="--k:0">
+        <div class="stage-node"><span class="stage-icon"><svg viewBox="0 0 28 28"><path d="M5 17a9 9 0 0 1 18 0"/><circle cx="8" cy="12" r="1.6"/><circle cx="14" cy="9" r="1.6"/><circle cx="20" cy="12" r="1.6"/><path d="M5 17v3M23 17v3"/></svg></span><span class="pulse"></span></div>
+        <span class="k">Stage 1</span><h3>Headset</h3><p>OpenBCI Ganglion, 4 channels over Bluetooth LE. Default montage F3, F4, O1, O2.</p><span class="io">µV @ 200 Hz</span>
+      </div>
+      <div class="stage reveal" style="--k:1">
+        <div class="stage-node"><span class="stage-icon"><svg viewBox="0 0 28 28"><path d="M3 20h4V12h4v8h4V6h4v14h4v-6h2"/></svg></span><span class="pulse"></span></div>
+        <span class="k">Stage 2</span><h3>Band powers</h3><p>BrainFlow computes relative δ θ α β γ power over a sliding 5–20 s window, with detrend, notch and band-pass.</p><span class="io">x ∈ ℝ⁵, every 250 ms</span>
+      </div>
+      <div class="stage reveal" style="--k:2">
+        <div class="stage-node"><span class="stage-icon"><svg viewBox="0 0 28 28"><path d="M3 21c6 0 6-14 11-14s5 10 11 10"/><path d="M3 24h22" opacity=".5"/></svg></span><span class="pulse"></span></div>
+        <span class="k">Stage 3</span><h3>Attention span</h3><p>The classifier's logit, smoothed with a 4 s time constant and scaled between your calibrated Relaxed and Focused states.</p><span class="io">span ∈ [0, 1] @ 4 Hz</span>
+      </div>
+      <div class="stage reveal" style="--k:3">
+        <div class="stage-node"><span class="stage-icon"><svg viewBox="0 0 28 28"><rect x="4" y="4" width="8" height="8" rx="2"/><rect x="16" y="4" width="8" height="8" rx="2"/><rect x="4" y="16" width="8" height="8" rx="2"/><rect x="16" y="16" width="8" height="8" rx="2" fill="currentColor" opacity=".35"/></svg></span><span class="pulse"></span></div>
+        <span class="k">Stage 4</span><h3>Policy</h3><p>A 3 × 2 outcome grid maps comprehension and attention to the next move, plus at most two style changes per lesson.</p><span class="io">booster · format · level</span>
+      </div>
+      <div class="stage reveal" style="--k:4">
+        <div class="stage-node"><span class="stage-icon"><svg viewBox="0 0 28 28"><rect x="5" y="4" width="18" height="20" rx="3"/><path d="M9 10h10M9 14h10M9 18h6"/></svg></span></div>
+        <span class="k">Stage 5</span><h3>Lesson renderer</h3><p>An LLM writes the lesson in the chosen style. Output is schema-validated and style constraints are checked in code.</p><span class="io">diagrams · examples · tone</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tech section" id="technology">
+  <div class="wash" style="opacity:.16"></div>
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Technology</p>
+      <h2 class="split">From a <span class="ghost">binary</span> readout to a continuous <span class="hl">attention span.</span></h2>
+      <p class="lede">The stock classifier saturates near p = 1.0, so its focus light is <mark>almost always on.</mark> We recovered the model's weights, undid its sigmoid and calibrated the result to each learner.</p>
+    </div>
+
+    <div class="bento">
+      <div class="panel c7 reveal">
+        <h3>Why the stock readout is binary</h3>
+        <svg id="sigmoid" viewBox="0 0 560 250" role="img" aria-label="Sigmoid curve. Every stock threshold falls between z 0 and 2.2; the measured operating point is z 6.02, p 0.998."></svg>
+        <p class="cap">At the operating point, a full unit change in the decision value moves p only in the third decimal. NeuroAdapt reads the horizontal axis instead.</p>
+      </div>
+      <div class="panel c5 reveal">
+        <h3>Recovered classifier weights</h3>
+        <svg id="weights" viewBox="0 0 400 220" role="img" aria-label="Weights: delta −1.406, theta +2.598, alpha −30.965, beta +12.046, gamma +45.773."></svg>
+        <p class="cap">Recovered by finite differences, verified to three decimals on random band vectors. The large gamma weight means jaw and forehead tension can inflate the score.</p>
+      </div>
+      <div class="panel c6 reveal">
+        <h3>The span, in three steps</h3>
+        <div class="eqs">
+          <div class="eq"><code>s = ln(p / (1 − p)) = w · x</code><span>Linearize: undo the sigmoid to get the logit.</span></div>
+          <div class="eq"><code>s̃ ← s̃ + (1 − e<sup>−Δt/τ</sup>)(s − s̃),  τ = 4 s</code><span>Smooth with a time-aware exponential moving average.</span></div>
+          <div class="eq"><code>span = (s̃ − L) / (H − L)</code><span>Scale between your captured Relaxed (L) and Focused (H) means.</span></div>
+        </div>
+      </div>
+      <div class="panel c6 reveal">
+        <h3>Calibrated per learner</h3>
+        <p>Capture a minute relaxed and a minute focused. Their means become 0 and 1 on your scale. The span is never an absolute percentage and never compared across people.</p>
+        <svg id="calib" viewBox="0 0 400 120" role="img" aria-label="Scale from your Relaxed mean at 0 to your Focused mean at 1, with the live span."></svg>
+      </div>
+      <div class="panel c12 reveal">
+        <h3>Teaching policy</h3>
+        <p>The LLM writes content. Code makes every decision. Comprehension comes from rubric marks (pass ≥ 0.75, partial 0.40–0.75, miss &lt; 0.40); attention is high when the lesson's mean span ≥ 0.50.</p>
+        <div class="og-wrap">
+          <table class="og">
+            <thead><tr><th></th><th>High attention</th><th>Low attention</th></tr></thead>
+            <tbody>
+              <tr><th>Pass</th><td><b>Advance.</b> No booster.</td><td><b>Suggest a short refresher</b> in a new format.</td></tr>
+              <tr><th>Partial</th><td><b>Short booster</b> and a recheck.</td><td><b>Short booster in a new format</b> and a recheck.</td></tr>
+              <tr><th>Miss</th><td><b>Long booster</b>, different representation, one level simpler.</td><td><b>Long booster in a new format</b> and a recheck.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="cap">At most two style changes per lesson, so any later change in attention stays attributable. No headset: the policy falls back to comprehension alone.</p>
+      </div>
+    </div>
+      </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wash" style="opacity:.25"></div>
+  <div class="wrap contact-grid">
+    <div>
+      <p class="eyebrow">Contact</p>
+      <h2 class="split">Want to try it or talk about the <span class="hl">research?</span></h2>
+      <p class="lede">Questions, collaborations, or a live demo with the headset. Reach out directly.</p>
+    </div>
+    <div class="contact-card">
+      <a class="btn btn-primary btn-lg" href="https://outlook.office.com/mail/deeplink/compose?to=alexander.w.fagell.30%40dartmouth.edu&amp;subject=NeuroAdapt" target="_blank" rel="noopener">Get in touch <span class="arrow">→</span></a>
+      
+      <a class="btn btn-ghost" href="https://www.youtube.com/watch?v=NLZuqNi_TjE" target="_blank" rel="noopener">Watch the demo</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap foot-bottom">
+    <span class="brand" style="font-size:15px"><span class="mark" aria-hidden="true" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 20 12" style="width:15px"><path d="M0 6h4l2-5 3 10 3-8 2 3h6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg></span>NeuroAdapt</span>
+    <span>Research prototype · Not a medical device</span>
+  </div>
+</footer>
+
+
+<script>
+(() => {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const LOOP = 96;
+  const ss = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
+  const wob = (t) => 0.035 * Math.sin(t * 1.7) + 0.025 * Math.sin(t * 3.1 + 1) + 0.015 * Math.sin(t * 7.3 + 2);
+  // One sample lesson: steady, a dip from ~30 s, re-render at ~56 s, recovery by ~70 s.
+  const spanAt = (t) => {
+    const lt = ((t % LOOP) + LOOP) % LOOP;
+    const dip = ss(28, 36, lt) * (1 - ss(58, 68, lt));
+    return 0.71 + 0.05 * ss(60, 75, lt) - dip * 0.42 + wob(t);
+  };
+  const css = (n, at = document.documentElement) => getComputedStyle(at).getPropertyValue(n).trim();
+  const techEl = document.getElementById("technology");
+  const cssT = (n) => css(n, techEl);
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+  const once = (els, fn, threshold = 0.6) => {
+    if (!("IntersectionObserver" in window)) { els.forEach(fn); return; }
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { fn(e.target); io.unobserve(e.target); } }), { threshold });
+    els.forEach((x) => io.observe(x));
+  };
+  function fit(canvas) {
+    const r = canvas.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, r.width * d); canvas.height = Math.max(1, r.height * d);
+    const ctx = canvas.getContext("2d"); ctx.setTransform(d, 0, 0, d, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  }
+  const eeg = (ch, x, s) => (1 - s) * 22 * Math.sin(x * 62.8 + ch) + (6 + s * 10) * Math.sin(x * 132 + ch * 2) + 9 * Math.sin(x * 14.4 + ch * .7) + 5 * Math.sin(x * 232 + ch * 3) + 4 * Math.sin(x * 38 + ch * 1.3);
+  // Draws only while on screen.
+  const loop = (canvas, draw) => {
+    let visible = true, running = false;
+    const tick = (now) => { draw(now); if (!reduce && visible) requestAnimationFrame(tick); else running = false; };
+    const start = () => { if (!running) { running = true; requestAnimationFrame(tick); } };
+    if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) start(); }).observe(canvas);
+    start();
+  };
+
+  /* ---------------- Text: split headings, draw marks, count up, decode eyebrows */
+  document.documentElement.classList.add("js");
+  const splitWords = (root) => {
+    let i = 0;
+    const walk = (node) => [...node.childNodes].forEach((c) => {
+      if (c.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        c.textContent.split(/(\s+)/).forEach((part) => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(part));
+          else { const s = document.createElement("span"); s.className = "w"; s.style.setProperty("--i", i++); s.textContent = part; frag.appendChild(s); }
+        });
+        c.replaceWith(frag);
+      } else if (c.nodeType === 1) {
+        if (c.matches(".hl, .ghost, .trace, .switch, .dip")) {
+          if (c.matches(".dip")) { const s = document.createElement("span"); s.className = "w"; s.style.setProperty("--i", i++); c.replaceWith(s); s.appendChild(c); }
+          else { c.classList.add("w"); c.style.setProperty("--i", i++); }
+        } else walk(c);
+      }
+    });
+    walk(root);
+  };
+  if (!reduce) document.querySelectorAll("h2.split, .hero h1").forEach(splitWords);
+  const marks = [...document.querySelectorAll("mark")];
+  if (reduce) marks.forEach((m) => m.classList.add("in")); else once(marks, (m) => setTimeout(() => m.classList.add("in"), 250), 1);
+  if (!reduce) once([...document.querySelectorAll(".count")], (c) => {
+    const to = +c.dataset.to, t0 = performance.now();
+    const step = (now) => { const p = Math.min(1, (now - t0) / 1400); c.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }, 0.8);
+  const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&·";
+  if (!reduce) once([...document.querySelectorAll(".eyebrow")], (e) => {
+    const final = e.textContent; let frame = 0;
+    const tick = () => {
+      frame++;
+      e.textContent = [...final].map((ch, i) => (ch === " " || i < frame / 1.5) ? ch : GLYPHS[(Math.random() * GLYPHS.length) | 0]).join("");
+      if (frame / 1.5 < final.length) requestAnimationFrame(tick); else e.textContent = final;
+    };
+    tick();
+  }, 1);
+
+  /* ---------------- Nav */
+  const nav = document.getElementById("nav");
+  const onNav = () => nav.classList.toggle("scrolled", window.scrollY > 8);
+  window.addEventListener("scroll", onNav, { passive: true }); onNav();
+
+  /* ---------------- Hero ridgeline: stacked EEG traces, louder on the right, the dip rolling through */
+  const ridgeC = document.getElementById("ridge");
+  let ridge = fit(ridgeC);
+  const ridgeBlue = css("--accent"), paper = css("--paper");
+  loop(ridgeC, (now) => {
+    const t = reduce ? 8 : now / 1000;
+    const { ctx, w, h } = ridge;
+    ctx.clearRect(0, 0, w, h);
+    const rows = 28, top = h * 0.08, gap = (h * 0.86) / rows;
+    for (let r = 0; r < rows; r++) {
+      const base = top + r * gap;
+      const depth = r / (rows - 1);
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 4) {
+        const u = x / w;
+        const env = Math.exp(-Math.pow((u - 0.72) / 0.2, 2)) * 0.9 + 0.08;
+        const ts = t * 0.9 + u * 3 + r * 0.37;
+        const s = spanAt(ts * 4);
+        const v = eeg(r % 4, ts * 0.12, s) / 60;
+        const y = base - Math.abs(v) * gap * 3.2 * env - Math.max(0, Math.sin(u * 9 + r + t)) * gap * 0.6 * env;
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      const sg = ctx.createLinearGradient(0, 0, w, 0);
+      sg.addColorStop(0, "#3f6dff"); sg.addColorStop(0.55, "#4f7dff"); sg.addColorStop(1, "#86a6ff");
+      ctx.strokeStyle = sg; ctx.globalAlpha = 0.1 + depth * 0.35; ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // Fade the left side so the headline reads cleanly.
+    const g = ctx.createLinearGradient(0, 0, w * 0.6, 0);
+    g.addColorStop(0, "rgba(5,7,11,0.95)"); g.addColorStop(0.55, "rgba(5,7,11,0.6)"); g.addColorStop(1, "rgba(5,7,11,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  });
+
+  /* ---------------- Calibration scale */
+  const cg = document.getElementById("calib");
+  const cx = (v) => 30 + v * 340;
+  el("rect", { x: cx(0), y: 50, width: cx(1) - cx(0), height: 14, rx: 7, fill: cssT("--surface-2") }, cg);
+  const cfill = el("rect", { x: cx(0), y: 50, width: 0, height: 14, rx: 7, fill: cssT("--accent") }, cg);
+  [[0, "Relaxed mean (L)"], [1, "Focused mean (H)"]].forEach(([v, label]) => {
+    el("line", { x1: cx(v), x2: cx(v), y1: 40, y2: 74, stroke: cssT("--ink-2"), "stroke-width": 1.5 }, cg);
+    el("text", { x: cx(v), y: 94, "text-anchor": v ? "end" : "start" }, cg).textContent = label;
+    el("text", { x: cx(v), y: 30, "text-anchor": "middle", style: `fill:${cssT("--ink")}` }, cg).textContent = v;
+  });
+  const needle = el("g", {}, cg);
+  el("circle", { cx: 0, cy: 57, r: 8, fill: cssT("--ink"), stroke: cssT("--accent"), "stroke-width": 3 }, needle);
+
+  /* ---------------- Hero instrument */
+  const heroCanvas = document.getElementById("heroCanvas");
+  const heroSpan = document.getElementById("heroSpan"), heroFill = document.getElementById("heroFill");
+  const heroTag = document.getElementById("heroTag"), heroTxt = document.getElementById("heroTxt");
+  const chColors = [0, 1, 2, 3].map((i) => css(`--ch-${i}`));
+  const heroMsgs = [
+    [0, "Monitor", "Span 0.71, stable. No style change."],
+    [33, "Detect", "Span falling. All 4 channels agree, not an artifact."],
+    [44, "Decide", "Dense text, low attention. Re-rendering visually."],
+    [56, "Adapt", "Diagrams 1 → 3, worked example added."],
+    [68, "Update", "Span recovered. Diagram weight raised."],
+  ];
+  let hero = fit(heroCanvas), t0 = performance.now(), lastMsg = -1;
+  function drawHero(now) {
+    const t = reduce ? 10 : (now - t0) / 1000 + 2;
+    const { ctx, w, h } = hero;
+    ctx.clearRect(0, 0, w, h);
+    const rowH = h / 4, N = Math.max(80, Math.floor(w / 2)), secs = 3;
+    for (let ch = 0; ch < 4; ch++) {
+      ctx.beginPath(); ctx.strokeStyle = chColors[ch]; ctx.lineWidth = 1.2;
+      for (let i = 0; i < N; i++) {
+        const ts = t - secs + (i / (N - 1)) * secs;
+        const y = rowH * ch + rowH / 2 - (eeg(ch, ts, spanAt(ts)) / 60) * (rowH / 2);
+        const x = (i / (N - 1)) * w;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    const s = spanAt(t), sc = Math.max(0, Math.min(1, s));
+    heroSpan.textContent = s.toFixed(2);
+    heroSpan.classList.toggle("low", s < 0.45);
+    heroFill.style.width = `${sc * 100}%`;
+    needle.setAttribute("transform", `translate(${cx(sc)},0)`);
+    cfill.setAttribute("width", cx(sc) - cx(0));
+    const lt = t % LOOP;
+    let idx = 0; heroMsgs.forEach((m, i) => { if (lt >= m[0]) idx = i; });
+    if (idx !== lastMsg) {
+      lastMsg = idx; heroTxt.style.opacity = 0;
+      setTimeout(() => { heroTag.textContent = heroMsgs[idx][1]; heroTxt.textContent = heroMsgs[idx][2]; heroTxt.style.opacity = 1; }, 200);
+    }
+    if (!reduce) requestAnimationFrame(drawHero);
+  }
+  requestAnimationFrame(drawHero);
+
+  /* ---------------- Pipeline pulse distance follows the column width */
+  const pipe = document.getElementById("pipe");
+  const setRun = () => { const st = pipe.querySelector(".stage"); pipe.style.setProperty("--run", `${Math.max(40, st.getBoundingClientRect().width - 62)}px`); };
+  setRun();
+
+  /* ---------------- Sigmoid */
+  const sg = document.getElementById("sigmoid");
+  const sm = { l: 44, r: 16, t: 16, b: 46 }, SW = 560, SH = 250;
+  const zx = (z) => sm.l + ((z + 4) / 14) * (SW - sm.l - sm.r);
+  const py = (p) => sm.t + (1 - p) * (SH - sm.t - sm.b);
+  const thr = cssT("--threshold"), sig = cssT("--signal"), ink = cssT("--ink");
+  el("rect", { x: zx(0), y: sm.t, width: zx(2.197) - zx(0), height: SH - sm.t - sm.b, fill: thr, opacity: 0.08 }, sg);
+  [0, 0.5, 1].forEach((p) => { el("line", { class: "grid", x1: sm.l, x2: SW - sm.r, y1: py(p), y2: py(p) }, sg); el("text", { x: sm.l - 8, y: py(p) + 4, "text-anchor": "end" }, sg).textContent = p; });
+  [-4, -2, 0, 2, 4, 6, 8, 10].forEach((z) => { el("text", { x: zx(z), y: SH - 28, "text-anchor": "middle" }, sg).textContent = z; });
+  el("text", { x: zx(3), y: SH - 6, "text-anchor": "middle" }, sg).textContent = "decision value z = w · x";
+  let sd = ""; for (let i = 0; i <= 200; i++) { const z = -4 + (i / 200) * 14; sd += `${i ? "L" : "M"}${zx(z).toFixed(1)},${py(1 / (1 + Math.exp(-z))).toFixed(1)}`; }
+  const sigPath = el("path", { d: sd, fill: "none", stroke: ink, "stroke-width": 2 }, sg);
+  [0.5, 0.6, 0.7, 0.8, 0.9].forEach((T) => { const z = Math.log(T / (1 - T)); el("circle", { cx: zx(z), cy: py(T), r: 3.5, fill: thr }, sg); });
+  el("text", { x: zx(1.1), y: py(0.08), "text-anchor": "middle", style: `fill:${thr}` }, sg).textContent = "stock thresholds 0.5–0.9";
+  const opx = zx(6.02), opy = py(0.99758);
+  el("line", { x1: opx, x2: opx, y1: opy, y2: py(0), stroke: sig, "stroke-dasharray": "3 4" }, sg);
+  const op = el("circle", { cx: opx, cy: opy, r: 6, fill: sig }, sg);
+  el("text", { x: opx + 12, y: py(0.84), style: `fill:${sig}` }, sg).textContent = "measured";
+  el("text", { x: opx + 12, y: py(0.76), style: `fill:${sig}` }, sg).textContent = "z 6.02 · p 0.998";
+  if (!reduce) op.animate([{ r: 6 }, { r: 9 }, { r: 6 }], { duration: 1800, iterations: Infinity });
+  const sl = sigPath.getTotalLength(); sigPath.style.strokeDasharray = sl;
+  if (!reduce) once([sg], () => sigPath.animate([{ strokeDashoffset: sl }, { strokeDashoffset: 0 }], { duration: 1600, easing: "cubic-bezier(.6,.1,.2,1)" }), 0.4);
+
+  /* ---------------- Weights */
+  const wg = document.getElementById("weights");
+  const WW = 400, wm = { l: 70, r: 60 };
+  const rows = [["δ delta", -1.406], ["θ theta", 2.598], ["α alpha", -30.965], ["β beta", 12.046], ["γ gamma", 45.773]];
+  const wx = (v) => wm.l + ((v + 50) / 100) * (WW - wm.l - wm.r);
+  el("line", { x1: wx(0), x2: wx(0), y1: 4, y2: 200, stroke: cssT("--line-2") }, wg);
+  const bars = rows.map(([name, v], i) => {
+    const y = 14 + i * 38;
+    el("text", { x: wm.l - 10, y: y + 14, "text-anchor": "end" }, wg).textContent = name;
+    const x0 = Math.min(wx(0), wx(v)), wd = Math.max(1, Math.abs(wx(v) - wx(0)));
+    const bar = el("rect", { x: x0, y, width: wd, height: 20, rx: 3, fill: v > 0 ? cssT("--accent") : cssT("--ink-3") }, wg);
+    el("text", { x: v > 0 ? wx(v) + 6 : wx(v) - 6, y: y + 14, "text-anchor": v > 0 ? "start" : "end", style: `fill:${ink}` }, wg).textContent = (v > 0 ? "+" : "") + v.toFixed(3);
+    return [bar, x0, wd];
+  });
+  el("text", { x: wx(-50), y: 214 }, wg).textContent = "−50";
+  el("text", { x: wx(0), y: 214, "text-anchor": "middle" }, wg).textContent = "0";
+  el("text", { x: wx(50), y: 214, "text-anchor": "end" }, wg).textContent = "+50";
+  if (!reduce) once([wg], () => bars.forEach(([bar, x0, wd], i) => bar.animate([{ width: "0px", x: `${wx(0)}px` }, { width: `${wd}px`, x: `${x0}px` }], { duration: 900, delay: i * 90, easing: "cubic-bezier(.2,.7,.2,1)", fill: "backwards" })), 0.4);
+
+    window.addEventListener("resize", () => { hero = fit(heroCanvas); ridge = fit(ridgeC); setRun(); });
+})();
+
+</script>
+
+<script>
+  const reduceSB = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+(() => {
+  const stage = document.getElementById("stage"), frame = document.getElementById("frame");
+  const scenes = [...frame.querySelectorAll(".scene")];
+  const names = ["Hook", "Problem", "Product", "Demo", "Under the hood", "Call to action"];
+  const dotrow = document.getElementById("dotrow"), title = document.getElementById("sceneTitle");
+  const prev = document.getElementById("prev"), next = document.getElementById("next");
+
+  // Scene 5 dot row: 30 lit dots, one per two seconds.
+  const dots = document.getElementById("sbDots");
+  for (let i = 0; i < 30; i++) { const d = document.createElement("i"); d.style.setProperty("--i", i); dots.appendChild(d); }
+
+  const fit = () => frame.style.setProperty("--s", stage.clientWidth / 960);
+  new ResizeObserver(fit).observe(stage); fit();
+
+  const dotEls = scenes.map((_, i) => {
+    const b = document.createElement("button");
+    b.className = "sb-dot"; b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-label", `Scene ${i + 1}: ${names[i]}`);
+    b.addEventListener("click", () => go(i));
+    dotrow.appendChild(b); return b;
+  });
+
+  let cur = 0;
+  function go(i) {
+    cur = Math.max(0, Math.min(scenes.length - 1, i));
+    scenes.forEach((s, k) => {
+      s.classList.remove("active");
+      s.setAttribute("aria-hidden", k === cur ? "false" : "true");
+    });
+    void frame.offsetWidth; // restart this scene's keyframes
+    scenes[cur].classList.add("active");
+    dotEls.forEach((d, k) => d.setAttribute("aria-current", k === cur ? "true" : "false"));
+    prev.disabled = cur === 0; next.disabled = cur === scenes.length - 1;
+    title.textContent = `${cur + 1} / ${scenes.length} · ${names[cur]}`;
+  }
+  prev.addEventListener("click", () => go(cur - 1));
+  next.addEventListener("click", () => go(cur + 1));
+  document.getElementById("restart").addEventListener("click", (e) => { e.preventDefault(); go(0); });
+  // Arrow keys only while the explainer is on screen; autoplay while visible until the viewer takes over.
+  let inView = false, manual = false, timer = 0;
+  const hold = [7000, 7500, 6500, 9000, 9000, 8000];
+  const schedule = () => { clearTimeout(timer); if (inView && !manual && !reduceSB) timer = setTimeout(() => { go((cur + 1) % scenes.length); schedule(); }, hold[cur]); };
+  const takeOver = () => { manual = true; clearTimeout(timer); };
+  [prev, next, dotrow].forEach((n) => n.addEventListener("click", takeOver));
+  window.addEventListener("keydown", (e) => {
+    if (!inView || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if (e.key === "ArrowRight") { takeOver(); go(cur + 1); }
+    else if (e.key === "ArrowLeft") { takeOver(); go(cur - 1); }
+  });
+  let started = false;
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => { inView = e.isIntersecting; if (inView && !started) { started = true; go(0); } schedule(); }, { threshold: 0.5 }).observe(stage);
+  }
+  go(0);
+})();
+</script>
+<script src="brain.js" defer></script>
+</body>
+</html>
